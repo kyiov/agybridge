@@ -85,7 +85,7 @@ if [ -f "./web.py" ]; then
 elif [ -f "./agybridge/web.py" ]; then
     cd ./agybridge
 else
-    repo_url="${REPO_URL:-https://github.com/your-username/agybridge.git}"
+    repo_url="${REPO_URL:-https://github.com/kyiov/agybridge.git}"
     echo "Cloning repository from $repo_url..."
     git clone "$repo_url" agybridge
     cd ./agybridge

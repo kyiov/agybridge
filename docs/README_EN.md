@@ -39,7 +39,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/agybridge.git agybridge
+git clone https://github.com/kyiov/agybridge.git agybridge
 cd agybridge
 
 # Create and activate virtual environment

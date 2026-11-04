@@ -51,7 +51,7 @@
 
 ```bash
 # Kloning repositori
-git clone https://github.com/your-username/agybridge.git agybridge
+git clone https://github.com/kyiov/agybridge.git agybridge
 cd agybridge
 
 # Buat virtual environment dengan uv

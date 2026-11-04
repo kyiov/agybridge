@@ -22,7 +22,7 @@ elseif (Test-Path -LiteralPath "./agybridge/web.py") {
     Set-Location ./agybridge
 }
 else {
-    $repoUrl = if ($env:REPO_URL) { $env:REPO_URL } else { "https://github.com/your-username/agybridge.git" }
+    $repoUrl = if ($env:REPO_URL) { $env:REPO_URL } else { "https://github.com/kyiov/agybridge.git" }
     git clone $repoUrl agybridge
     Set-Location ./agybridge
 }

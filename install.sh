@@ -243,7 +243,7 @@ else
         rm -rf ./agybridge
     fi
     
-    REPO_URL="${REPO_URL:-https://github.com/your-username/agybridge.git}"
+    REPO_URL="${REPO_URL:-https://github.com/kyiov/agybridge.git}"
     if ! git clone "$REPO_URL"; then
         log_error "Failed to clone repository"
         exit 1
