@@ -1,4 +1,4 @@
-full_hash=bbf9ff529af5036fed8979b8d8f45556c3b66feb
-short_hash=bbf9ff5
-message=feat: initial release of AGYBridge v1.0.0
-date=2026-11-04 09:03:26 +0000
+full_hash=61a2c080c0be84fc74037cebde917cfd8021b241
+short_hash=61a2c08
+message=docs: update repository clone URLs to kyiov/agybridge
+date=2026-11-04 09:04:38 +0000
