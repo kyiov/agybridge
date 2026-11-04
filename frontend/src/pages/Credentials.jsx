@@ -8,7 +8,9 @@ import {
   Clock,
   Download,
   Loader2,
+  Plus,
   RefreshCw,
+  Rocket,
   Shield,
   Snowflake,
   Trash2,
@@ -19,7 +21,7 @@ import Modal from "../components/Modal";
 import Select from "../components/Select";
 import api from "../api";
 
-export default function Credentials() {
+export default function Credentials({ onNavigateTab }) {
   const [items, setItems] = useState([]);
   const [stats, setStats] = useState({ total: 0, normal: 0, disabled: 0 });
   const [total, setTotal] = useState(0);
@@ -351,23 +353,44 @@ export default function Credentials() {
       </div>
 
       {/* Tombol Aksi */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={fetchCreds}
-          disabled={loading}
-          className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
-        >
-          <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-          Segarkan Status
-        </button>
-        <button
-          onClick={downloadAll}
-          disabled={busyFiles.has("__batch__")}
-          className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
-        >
-          <Download size={15} />
-          Ekspor Semua (ZIP)
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onNavigateTab && (
+            <button
+              onClick={() => onNavigateTab("oauth")}
+              className="btn btn-primary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 shadow-md shadow-purple-600/20"
+            >
+              <Plus size={15} />
+              Tambah Akun (Google OAuth)
+            </button>
+          )}
+          <button
+            onClick={fetchCreds}
+            disabled={loading}
+            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
+          >
+            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+            Segarkan Status
+          </button>
+          <button
+            onClick={downloadAll}
+            disabled={busyFiles.has("__batch__")}
+            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5"
+          >
+            <Download size={15} />
+            Ekspor Semua (ZIP)
+          </button>
+        </div>
+
+        {onNavigateTab && (
+          <button
+            onClick={() => onNavigateTab("presets")}
+            className="btn btn-secondary text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 text-purple-300 border-purple-500/30 hover:border-purple-500/60"
+          >
+            <Rocket size={14} className="text-purple-400" />
+            Preset Coding Agent
+          </button>
+        )}
       </div>
 
       {/* Filter Kredensial */}

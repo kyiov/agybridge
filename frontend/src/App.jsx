@@ -6,12 +6,14 @@ import {
     Upload,
     Info,
     BarChart3,
+    Terminal,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Logo from "./components/Logo";
 import api from "./api";
 import Login from "./pages/Login";
 import OAuth from "./pages/OAuth";
+import Presets from "./pages/Presets";
 import Credentials from "./pages/Credentials";
 import UploadPage from "./pages/Upload";
 import Config from "./pages/Config";
@@ -51,6 +53,7 @@ export default function App() {
 
   const tabs = [
     { id: "oauth", label: "Autentikasi OAuth", icon: Rocket },
+    { id: "presets", label: "Preset Coding Agent", icon: Terminal },
     { id: "credentials", label: "Kelola Kredensial", icon: KeyRound },
     { id: "upload", label: "Impor Massal", icon: Upload },
     { id: "usage-logs", label: "Log Permintaan", icon: BarChart3 },
@@ -108,8 +111,9 @@ export default function App() {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        {activeTab === "oauth" && <OAuth />}
-        {activeTab === "credentials" && <Credentials />}
+        {activeTab === "oauth" && <OAuth onNavigateTab={setActiveTab} />}
+        {activeTab === "presets" && <Presets />}
+        {activeTab === "credentials" && <Credentials onNavigateTab={setActiveTab} />}
         {activeTab === "upload" && <UploadPage />}
         {activeTab === "usage-logs" && <UsageLogs />}
         {activeTab === "config" && <Config />}

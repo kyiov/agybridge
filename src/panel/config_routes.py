@@ -256,3 +256,33 @@ async def save_config(request: ConfigSaveRequest, token: str = Depends(verify_pa
     except Exception as e:
         log.error(f"Gagal menyimpan konfigurasi: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/presets")
+async def get_agent_presets(token: str = Depends(verify_panel_token)):
+    """Retrieve pre-built integration configurations for Cursor, Claude Code, Cline, Continue.dev, etc."""
+    try:
+        api_password = await config.get_api_password()
+        port = await config.get_server_port()
+        host = await config.get_server_host()
+        base_url = f"http://127.0.0.1:{port}/"
+
+        recommended_models = [
+            {"id": "gemini-3.8-flash-high", "name": "Gemini 3.8 Flash High", "desc": "Kecepatan ultra, penalaran tingkat tinggi (Default)", "badge": "Rekomendasi"},
+            {"id": "claude-sonnet-4-6", "name": "Claude Sonnet 4.6", "desc": "Presisi coding terbaik untuk refactoring rumit", "badge": "Coding Pro"},
+            {"id": "gemini-2.5-pro", "name": "Gemini 2.5 Pro", "desc": "Kapasitas konteks besar dan pemecahan masalah kompleks", "badge": "Arsitektur"},
+            {"id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "desc": "Ringan dan sangat responsif untuk tugas sehari-hari", "badge": "Cepat"},
+            {"id": "anti-truncate-gemini-3.8-flash-high", "name": "Anti-Truncate Gemini 3.8", "desc": "Otomatis melanjutkan respon panjang tanpa terpotong", "badge": "Long-form"}
+        ]
+
+        return JSONResponse(content={
+            "api_password": api_password,
+            "port": port,
+            "host": host,
+            "default_local_base_url": base_url,
+            "models": recommended_models
+        })
+    except Exception as e:
+        log.error(f"Gagal memuat preset: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

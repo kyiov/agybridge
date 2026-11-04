@@ -214,17 +214,49 @@ class AuthCallbackHandler(BaseHTTPRequestHandler):
 
             log.info(f"OAuth callback successfully handled: state={state}")
 
+            html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AGYBridge - Autentikasi Berhasil</title>
+  <style>
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }}
+    .card {{ background: #1e293b; padding: 2.5rem; border-radius: 1rem; border: 1px solid #334155; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); max-width: 420px; }}
+    h1 {{ color: #10b981; font-size: 1.5rem; margin-bottom: 0.5rem; }}
+    p {{ color: #94a3b8; font-size: 0.95rem; line-height: 1.5; }}
+    .badge {{ display: inline-block; background: #064e3b; color: #34d399; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; }}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">AGYBridge OAuth</div>
+    <h1>Autentikasi Berhasil!</h1>
+    <p>Akun Google Anda berhasil diverifikasi. Jendela ini akan tertutup otomatis dalam beberapa detik.</p>
+  </div>
+  <script>
+    if (window.opener) {{
+      try {{
+        window.opener.postMessage({{ type: 'AGYBRIDGE_OAUTH_SUCCESS', state: '{state}' }}, '*');
+      }} catch (e) {{}}
+      setTimeout(function() {{ window.close(); }}, 2000);
+    }}
+  </script>
+</body>
+</html>"""
             self.send_response(200)
-            self.send_header("Content-type", "text/html")
+            self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(
-                b"<h1>OAuth authentication successful!</h1><p>You can close this window. Please return to the panel and click 'Get Credentials'.</p>"
-            )
+            self.wfile.write(html_content.encode("utf-8"))
         else:
             self.send_response(400)
-            self.send_header("Content-type", "text/html")
+            self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b"<h1>Authentication failed.</h1><p>Please try again.</p>")
+            fail_html = """<!DOCTYPE html>
+<html><body style="font-family: sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding-top: 100px;">
+  <h1 style="color: #ef4444;">Autentikasi Gagal</h1>
+  <p style="color: #94a3b8;">Parameter alur autentikasi tidak valid atau telah kedaluwarsa. Silakan coba kembali dari panel.</p>
+</body></html>"""
+            self.wfile.write(fail_html.encode("utf-8"))
 
     def log_message(self, format, *args):
         pass
