@@ -1,0 +1,56 @@
+name: Bug Report
+description: Report an issue or unexpected behavior in AGYBridge
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Thank you for reporting!
+        Please provide clear details to help reproduce and resolve the problem.
+  
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate.
+          required: true
+        - label: I have read the project documentation.
+          required: true
+  
+  - type: input
+    id: version
+    attributes:
+      label: System Version
+      description: The commit hash or release version you are running.
+      placeholder: "e.g. 9a3d740"
+    validations:
+      required: true
+  
+  - type: input
+    id: model
+    attributes:
+      label: Model Name
+      description: The model invoked during the request.
+      placeholder: "e.g. gemini-2.5-flash"
+    validations:
+      required: true
+  
+  - type: dropdown
+    id: format
+    attributes:
+      label: API Format
+      description: The API format used.
+      options:
+        - OpenAI format (/v1/chat/completions)
+        - Gemini format (/v1beta/models)
+        - Anthropic format (/v1/messages)
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description & Steps to Reproduce
+      description: What happened and how can we reproduce it?
+    validations:
+      required: true

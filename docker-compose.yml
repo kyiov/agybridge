@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  agybridge:
+    build: .
+    image: agybridge:latest
+    container_name: agybridge
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      # Password authentication
+      - API_PASSWORD=${API_PASSWORD:-your_api_password}
+      - PANEL_PASSWORD=${PANEL_PASSWORD:-your_panel_password}
+
+      # Server configuration
+      - PORT=${PORT:-7861}
+      - HOST=${HOST:-0.0.0.0}
+
+      # Optional: PostgreSQL URI
+      # - POSTGRESQL_URI=${POSTGRESQL_URI}
+
+      # Optional: Outbound proxy
+      # - PROXY=${PROXY}
+    volumes:
+      - ./data/creds:/app/creds
+      - ./data/request_logs:/app/data/request_logs
