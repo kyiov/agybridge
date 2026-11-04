@@ -1,121 +1,187 @@
 <div align="center">
   <img src="logo.png" alt="AGYBridge Logo" width="128" height="128" />
   <h1>AGYBridge</h1>
-  <p><strong>Universal API Gateway: Google Antigravity to OpenAI, Gemini & Claude Standards</strong></p>
-  <p>High-performance proxy gateway featuring multi-account rotation, model-level cooldown isolation, intelligent prompt caching, and real-time observability.</p>
+  <p><strong>Universal API Gateway: Google Antigravity to OpenAI, Claude & Gemini Standards</strong></p>
+  <p>High-performance proxy gateway featuring One-Click OAuth, Coding Agent Presets, multi-account rotation, model-level cooldown isolation, intelligent prompt caching, and real-time observability.</p>
 </div>
 
-> [!NOTE]
-> **AGYBridge** is an independently modernized fork of [agy2api](https://github.com/su-kaka/agy2api). It features a completely refactored codebase (zero non-standard character remnants), bilingual documentation, modernized dashboard typography (Inter & JetBrains Mono), and enhanced gateway stability.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue.svg?style=flat-square" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat-square" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-18.2+-61DAFB.svg?style=flat-square" alt="React" />
+  <img src="https://img.shields.io/badge/Tailwind-3.3+-38B2AC.svg?style=flat-square" alt="Tailwind" />
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License" />
+</p>
 
 ---
 
 ## ⚡ Key Highlights
 
-- **Standard Multi-Format API Support:**
-  - `POST /v1/chat/completions` (OpenAI format)
-  - `POST /v1beta/models/{model}:generateContent` (Gemini format)
-  - `POST /v1/messages` (Claude format)
-- **Multi-Account Credential Management:**
-  - Round-robin load balancing and context-aware session pinning (`cache` mode).
-  - Model-level HTTP 429 rate-limit cooldown isolation without taking down accounts globally.
-- **Upstream Prompt Cache Optimization:**
-  - Context-derived hashing pins conversations to identical credentials to maximize Google upstream prompt cache hits and reduce token overhead.
-- **Anti-Truncation Engine:**
-  - Automatically synthesizes continuation turns when response truncation is detected using the `anti-truncate-` model prefix.
-- **Modern Web Control Panel:**
-  - Built with React, Tailwind CSS, and Inter / JetBrains Mono typography for real-time credential management, usage analytics, error tracking, and zero-downtime configuration.
-- **Native SSE Streaming:**
-  - Fast Server-Sent Events with distinct separation of reasoning/thought tokens and output payload.
+- **🚀 One-Click Google OAuth Web Flow:** Connect Google Antigravity accounts instantly via browser popup. Credentials, tier levels (Free, Pro, Ultra), and project IDs are automatically verified and persisted into the database without manual JSON handling.
+- **💻 Coding Agent Presets:** 1-Click ready-to-use configurations and file exports for **Cursor**, **Claude Code CLI**, **Cline (VS Code)**, **Continue.dev**, and **Aider**.
+- **🔄 Multi-Account Smart Balancing:** Round-robin distribution, context-aware session pinning (`cache` mode), and model-level HTTP 429 cooldowns without taking accounts down globally.
+- **⚡ Prompt Cache Optimization:** Context-derived hashing pins conversations to identical credentials to maximize upstream Google prompt caching, decreasing latency by up to 60%.
+- **🛡️ Anti-Truncation Engine:** Automatically continues generation turns when long code responses hit token limits using the `anti-truncate-` prefix.
+- **🧠 Thinking / Reasoning Tokens:** Real-time streaming of internal reasoning processes via Server-Sent Events (SSE).
+- **🍖 Caveman Token Efficiency:** Integrated concise prompt mode for high token density and token conservation.
+- **📊 Modern Web Control Panel:** Responsive UI built with React, Tailwind CSS, and Inter / JetBrains Mono typography for real-time monitoring and configuration without downtime.
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    subgraph Clients["Coding Agents & AI Tools"]
+        C1["Cursor IDE"]
+        C2["Claude Code CLI"]
+        C3["Cline / Roo Code"]
+        C4["Continue.dev"]
+        C5["Aider / OpenAI SDK"]
+    end
+
+    subgraph Gateway["AGYBridge Gateway (Port 7861)"]
+        GW_API["FastAPI Reverse Proxy (/v1, /v1beta)"]
+        GW_AUTH["One-Click OAuth Flow & Storage"]
+        GW_ROUTER["Smart Router & Context Cache Hash"]
+        GW_CD["Model-Level Cooldown Manager"]
+    end
+
+    subgraph Upstream["Google Cloud Infrastructure"]
+        G_AUTH["Google OAuth2"]
+        G_ANTIGRAV["Google Antigravity / Gemini Cloud"]
+    end
+
+    Clients -->|OpenAI / Claude / Gemini API| GW_API
+    GW_API --> GW_ROUTER
+    GW_ROUTER --> GW_CD
+    GW_AUTH <-->|Token Exchange| G_AUTH
+    GW_CD -->|Rotated Bearer Requests| G_ANTIGRAV
+```
+
+---
+
+## 🎯 Supported Models
+
+| Model ID | Name | Strengths | Best For |
+| :--- | :--- | :--- | :--- |
+| `gemini-3.8-flash-high` | Gemini 3.8 Flash High | Ultra high speed, top-tier reasoning | **Primary Default** for general coding |
+| `claude-sonnet-4-6` | Claude Sonnet 4.6 | Syntax accuracy, deep refactoring | Autonomous coding in Cursor / Claude Code |
+| `gemini-2.5-pro` | Gemini 2.5 Pro | Massive context window, architecture reasoning | Large codebase comprehension |
+| `gemini-2.5-flash` | Gemini 2.5 Flash | Lightweight, instant responsiveness | Autocomplete & quick queries |
+| `anti-truncate-gemini-3.8-flash-high` | Anti-Truncate Gemini 3.8 | Auto-continues long responses | Complete file generation without cutoff |
+
+---
+
+## 💻 Coding Agent Integration
+
+Visit the **Preset Coding Agent** tab in the web dashboard (`http://localhost:7861`) to export one-click configs:
+
+### 1. Cursor IDE
+- **Settings** (`Ctrl/Cmd + Shift + J`) > **Models** > **Override OpenAI Base URL**:
+  ```text
+  http://127.0.0.1:7861/v1
+  ```
+- **API Key**: Your API password (e.g. `muharpolnep098`)
+- Download or copy `.cursorrules` directly from the dashboard.
+
+### 2. Claude Code CLI
+```bash
+export ANTHROPIC_BASE_URL="http://127.0.0.1:7861/v1"
+export ANTHROPIC_AUTH_TOKEN="muharpolnep098"
+export CLAUDE_MODEL="claude-sonnet-4-6"
+
+claude
+```
+
+### 3. Cline / Roo Code (VS Code)
+- **API Provider:** `OpenAI-Compatible`
+- **Base URL:** `http://127.0.0.1:7861/v1`
+- **API Key:** `muharpolnep098`
+- **Model ID:** `gemini-3.8-flash-high` or `claude-sonnet-4-6`
+
+### 4. Continue.dev
+In `~/.continue/config.json`:
+```json
+{
+  "models": [
+    {
+      "title": "AGYBridge - Gemini 3.8",
+      "provider": "openai",
+      "model": "gemini-3.8-flash-high",
+      "apiKey": "muharpolnep098",
+      "apiBase": "http://127.0.0.1:7861/v1"
+    }
+  ]
+}
+```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- Linux / macOS / Windows WSL
-- Python >= 3.12
-- Package manager: `uv` (recommended) or `pip`
-- `bun` or `npm` (for frontend asset compilation)
-
 ### 1. Installation
-
 ```bash
-# Clone the repository
 git clone https://github.com/kyiov/agybridge.git agybridge
 cd agybridge
 
-# Create and activate virtual environment
 uv venv
 source .venv/bin/activate
-
-# Install dependencies
 uv sync
 ```
 
-### 2. Configuration
-
-Copy `.env.example` to `.env` and set your credentials:
-
-```bash
-cp .env.example .env
-```
-
-Key configuration variables:
+### 2. Configuration (`.env`)
 ```env
-HOST=0.0.0.0
 PORT=7861
-PANEL_PASSWORD=your_secure_password
-API_PASSWORD=your_secure_password
-LOG_LEVEL=info
+HOST=0.0.0.0
+PANEL_PASSWORD=your_panel_password
+API_PASSWORD=your_api_password
+CREDENTIAL_SELECT_MODE=cache
+USAGE_LOG_ENABLED=true
 ```
 
-### 3. Launching the Service
-
+### 3. Launching
 ```bash
-python3 web.py
+# Direct run
+python web.py
+
+# Production with PM2
+pm2 start /root/agybridge/.venv/bin/python3 --name "agybridge" -- web.py
+pm2 save
 ```
 
-The service will be active at `http://127.0.0.1:7861/`.
-- **Web Control Panel**: `http://127.0.0.1:7861/`
-- **OpenAI Compatible Endpoint**: `http://127.0.0.1:7861/v1/chat/completions`
-- **Gemini Compatible Endpoint**: `http://127.0.0.1:7861/v1beta/models`
-- **Claude Compatible Endpoint**: `http://127.0.0.1:7861/v1/messages`
+Access the Web Control Panel at `http://127.0.0.1:7861/`.
 
 ---
 
-## 💻 API Usage Examples
+## 📡 API Usage Examples
 
-### 1. cURL (OpenAI Compatible)
-
+### cURL (OpenAI Compatible)
 ```bash
-curl -X POST "http://127.0.0.1:7861/v1/chat/completions" \
-  -H "Authorization: Bearer your_api_password" \
+curl -X POST "http://localhost:7861/v1/chat/completions" \
+  -H "Authorization: Bearer muharpolnep098" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "gemini-3.8-flash",
+    "model": "gemini-3.8-flash-high",
     "messages": [
-      {"role": "user", "content": "Explain quantum computing in one sentence."}
-    ],
-    "stream": false
+      {"role": "user", "content": "Explain microservices architecture briefly."}
+    ]
   }'
 ```
 
-### 2. Python (OpenAI SDK)
-
+### Python SDK
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="your_api_password",
-    base_url="http://127.0.0.1:7861/v1"
+    base_url="http://127.0.0.1:7861/v1",
+    api_key="muharpolnep098"
 )
 
 response = client.chat.completions.create(
-    model="gemini-3.8-flash",
-    messages=[
-        {"role": "user", "content": "What is the capital of Indonesia?"}
-    ]
+    model="gemini-3.8-flash-high",
+    messages=[{"role": "user", "content": "Hello AGYBridge!"}]
 )
 
 print(response.choices[0].message.content)
@@ -123,33 +189,4 @@ print(response.choices[0].message.content)
 
 ---
 
-## 🏗️ Building Frontend
-
-The web dashboard assets are compiled into the `dist/` directory and served natively by the backend:
-
-```bash
-cd frontend
-bun install
-bun run build
-```
-
----
-
-## 🙏 Acknowledgements & Attribution
-
-This project is built upon the foundational work of the open-source community:
-- Originates from [`agy2api`](https://github.com/su-kaka/agy2api) created by [su-kaka](https://github.com/su-kaka).
-- **AGYBridge** continues development as an independent, modernized downstream release focused on:
-  - **Complete Localization & Clean Code:** Refactored codebase, zero non-standard character remnants, and comprehensive documentation in English and Indonesian.
-  - **Overhauled UI & Typography:** Modernized React dashboard utilizing **Inter** and **JetBrains Mono** font hierarchy.
-  - **Security & Cross-Platform Tooling:** Hardened secrets handling, updated cross-platform automation (Linux, macOS, Termux, Windows), and modern package toolchains.
-
-Special thanks and appreciation to the original author and upstream contributors for their foundational work.
-
----
-
-## 📜 License & Disclaimer
-
-Distributed under the [MIT License](../LICENSE) © 2026 AGYBridge Contributors.
-
-This project is created for educational, research, and API gateway benchmarking purposes. Ensure compliance with fair use policies and applicable upstream terms of service.
+<sub>AGYBridge is an independently modernized fork of [agy2api](https://github.com/su-kaka/agy2api) with Inter & JetBrains Mono typography, clean codebase, and enhanced gateway performance. Distributed under the [MIT License](../LICENSE) © 2026.</sub>

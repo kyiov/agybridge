@@ -143,21 +143,18 @@ export default function About({ version, onCheckUpdate, checkingUpdate }) {
         </div>
       )}
 
-      {/* Pengakuan & Atribusi */}
-      <div className="card text-xs text-gray-500 space-y-1.5 border-dark-600/60">
-        <div className="text-gray-400 font-medium">Atribusi & Pengakuan:</div>
-        <p className="leading-relaxed">
-          AGYBridge merupakan fork independen yang dimodernisasi dari proyek upstream{" "}
-          <a
-            href="https://github.com/su-kaka/agy2api"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:text-blue-300 inline-flex items-center gap-0.5"
-          >
-            agy2api <ExternalLink size={11} />
-          </a>{" "}
-          karya su-kaka. Dikembangkan mandiri dengan pembersihan total kode, antarmuka baru berstandar Inter & JetBrains Mono, serta lisensi terbuka MIT © 2026.
-        </p>
+      {/* Catatan Atribusi Kecil */}
+      <div className="text-center text-xs text-gray-500/80 pt-2 pb-4">
+        <span>AGYBridge • Fork dari </span>
+        <a
+          href="https://github.com/su-kaka/agy2api"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-gray-400 hover:text-gray-300 underline inline-flex items-center gap-0.5"
+        >
+          agy2api <ExternalLink size={10} />
+        </a>
+        <span> dengan modernisasi dan peningkatan performa • Lisensi MIT</span>
       </div>
     </div>
   );

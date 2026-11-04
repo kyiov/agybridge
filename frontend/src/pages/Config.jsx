@@ -1,5 +1,27 @@
-import { Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  BarChart3,
+  Check,
+  CheckCircle2,
+  Copy,
+  Cpu,
+  Eye,
+  EyeOff,
+  Filter,
+  Info,
+  Loader2,
+  Lock,
+  Network,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Shield,
+  Sliders,
+  Trash2,
+  Zap,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "../components/Modal";
 import Select from "../components/Select";
 import api from "../api";
@@ -41,117 +63,272 @@ function CsvNumbersField({ value, onChange, placeholder }) {
       onChange={handleChange}
       onBlur={handleBlur}
       placeholder={placeholder}
-      className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-white placeholder-gray-500 font-mono"
+      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500 transition-colors"
     />
   );
 }
 
+// 5 Kategori Terstruktur & Bersih
+const CATEGORIES = [
+  { id: "all", label: "Semua", icon: Sliders },
+  { id: "security", label: "Keamanan & Server", icon: Shield },
+  { id: "routing", label: "Jaringan & Routing", icon: Network },
+  { id: "models", label: "Model & Respons", icon: Cpu },
+  { id: "stability", label: "Stabilitas & Retry", icon: RefreshCw },
+  { id: "logs", label: "Log & Analitik", icon: BarChart3 },
+];
+
 const CONFIG_GROUPS = [
   {
-    title: "Konfigurasi Server",
+    category: "security",
+    title: "Konfigurasi Host & Kunci Akses",
+    description: "Pengaturan identitas jaringan dan kata sandi otorisasi akses API serta panel.",
     fields: [
-      { key: "host", label: "Host Server", type: "text", note: "Alamat host server (0.0.0.0 mendengarkan seluruh antarmuka jaringan; berlaku setelah restart)" },
-      { key: "port", label: "Port Server", type: "number", note: "Port layanan (berlaku setelah restart)" },
-      { key: "api_password", label: "Kunci Akses API (API Password)", type: "text", note: "Kunci akses untuk endpoint OpenAI, Gemini, dan Claude" },
-      { key: "panel_password", label: "Kata Sandi Panel Kontrol", type: "text", note: "Kata sandi otorisasi untuk masuk ke panel web ini" },
+      {
+        key: "host",
+        label: "Host Binding Server",
+        type: "text",
+        note: "Gunakan 0.0.0.0 untuk mendengarkan seluruh antarmuka jaringan (berlaku setelah restart)",
+      },
+      {
+        key: "port",
+        label: "Port Layanan HTTP",
+        type: "number",
+        note: "Port layanan web dan gateway (berlaku setelah restart)",
+      },
+      {
+        key: "api_password",
+        label: "Kunci Akses API (API Password)",
+        type: "password_toggle",
+        note: "Kunci akses Bearer token untuk endpoint OpenAI, Claude, dan Gemini",
+      },
+      {
+        key: "panel_password",
+        label: "Kata Sandi Panel Web",
+        type: "password_toggle",
+        note: "Kata sandi yang digunakan saat login ke panel dashboard ini",
+      },
     ],
   },
   {
+    category: "security",
     title: "Whitelist Alamat IP",
+    description: "Batasi akses masuk hanya ke alamat IP atau subnet CIDR tepercaya.",
     fields: [
-      { key: "ip_whitelist_enabled", label: "Aktifkan Whitelist IP", type: "bool", note: "Jika aktif, hanya IP yang terdaftar yang dapat mengakses API dan panel (IP lain langsung 403)" },
-      { key: "ip_whitelist", label: "Daftar Whitelist IP", type: "textarea", showIf: (cfg) => !!cfg.ip_whitelist_enabled, note: "Satu IP atau CIDR per baris (mendukung IPv4 dan IPv6). Contoh: 127.0.0.1, 192.168.1.0/24", placeholder: "127.0.0.1\n192.168.1.0/24\n::1" },
+      {
+        key: "ip_whitelist_enabled",
+        label: "Aktifkan Proteksi Whitelist IP",
+        type: "bool",
+        note: "Jika diaktifkan, IP di luar daftar akan langsung ditolak (HTTP 403)",
+      },
+      {
+        key: "ip_whitelist",
+        label: "Daftar Alamat IP / CIDR yang Diizinkan",
+        type: "textarea",
+        showIf: (cfg) => !!cfg.ip_whitelist_enabled,
+        note: "Satu IP atau CIDR per baris (mendukung IPv4 dan IPv6). Contoh: 127.0.0.1 atau 192.168.1.0/24",
+        placeholder: "127.0.0.1\n192.168.1.0/24\n::1",
+      },
     ],
   },
   {
-    title: "Konfigurasi Dasar",
+    category: "security",
+    title: "Filter Kata Sensitif",
+    description: "Cegah kata atau frasa tertentu agar tidak memicu pembatasan upstream.",
     fields: [
-      { key: "credentials_dir", label: "Direktori Kredensial", type: "text", note: "Lokasi penyimpanan berkas kredensial akun" },
-      { key: "proxy", label: "Proksi Keluar (Outbound Proxy)", type: "text", note: "Mendukung http/https/socks5/socks5h (contoh: socks5h://127.0.0.1:1080); kosongkan jika koneksi langsung", placeholder: "http://user:pass@proxy:port atau socks5h://proxy:port" },
+      {
+        key: "sensitive_words_enabled",
+        label: "Aktifkan Filter Kata Sensitif",
+        type: "bool",
+        note: "Menyaring kata sensitif pada payload pertanyaan sebelum diteruskan",
+      },
+      {
+        key: "sensitive_words",
+        label: "Daftar Kata Sensitif",
+        type: "textarea",
+        showIf: (cfg) => !!cfg.sensitive_words_enabled,
+        note: "Satu kata/frasa per baris (tidak membedakan huruf besar/kecil)",
+        placeholder: "kata1\nkata2",
+      },
     ],
   },
   {
-    title: "Konfigurasi Endpoint",
-    fields: [
-      { key: "oauth_proxy_url", label: "Endpoint OAuth", type: "text", note: "URL endpoint Google OAuth2 untuk pembuatan dan penyegaran token" },
-      { key: "googleapis_proxy_url", label: "Endpoint Google APIs", type: "text", note: "URL endpoint Google APIs upstream" },
-      { key: "antigravity_api_url", label: "Endpoint API Antigravity", type: "text", note: "URL endpoint layanan backend Antigravity" },
-    ],
-  },
-  {
-    title: "Pemblokiran Otomatis (Auto-Ban)",
-    fields: [
-      { key: "auto_ban_enabled", label: "Aktifkan Auto-Ban", type: "bool", note: "Otomatis menonaktifkan kredensial jika menemui kode status error tertentu" },
-      { key: "auto_ban_error_codes", label: "Daftar Kode Error Auto-Ban", type: "text", note: "Format array JSON, contoh: [403, 400]" },
-    ],
-  },
-  {
-    title: "Percobaan Ulang (Retry)",
-    fields: [
-      { key: "retry_429_enabled", label: "Aktifkan Retry Otomatis", type: "bool", note: "Mencoba ulang permintaan saat menemui batas laju (Rate Limit / 429)" },
-      { key: "retry_429_max_retries", label: "Maksimal Percobaan", type: "number", note: "Jumlah maksimal pengulangan permintaan" },
-      { key: "retry_429_interval", label: "Jeda Waktu Antar Percobaan (Detik)", type: "number", note: "Waktu tunggu sebelum mencoba ulang (0 untuk langsung)" },
-    ],
-  },
-  {
-    title: "Metode Pemilihan Kredensial",
+    category: "routing",
+    title: "Metode Pemilihan Kredensial (Load Balancing)",
+    description: "Atur strategi pemilihan akun upstream Google Antigravity untuk setiap request masuk.",
     fields: [
       {
         key: "credential_select_mode",
-        label: "Mode Pemilihan",
+        label: "Strategi Rotasi Akun",
         type: "select",
-        note: "Menentukan bagaimana akun/kredensial dipilih untuk tiap panggilan API",
+        note: "Pilih metode distribusi beban antar akun Google yang terdaftar",
         options: [
-          { value: "random", label: "Acak Seimbang (Random)" },
-          { value: "cache", label: "Pencocokan Cache (Rekomendasi)" },
-          { value: "sticky", label: "Tetap pada Satu Akun (Sticky)" },
+          { value: "cache", label: "Pencocokan Cache Hash (Sangat Direkomendasikan)" },
+          { value: "random", label: "Acak Seimbang (Random Balance)" },
+          { value: "sticky", label: "Kunci Satu Akun (Sticky Mode)" },
         ],
         descriptions: {
-          random: "Acak Seimbang: Memilih kredensial aktif secara acak pada setiap request untuk membagi beban secara merata.",
-          cache: "Pencocokan Cache: Mengelompokkan sesi obrolan yang sama ke kredensial yang sama agar memanfaatkan prompt caching upstream Google, menghemat token dan mempercepat respons.",
-          sticky: "Sticky: Mengunci seluruh request ke satu kredensial sampai akun tersebut terkena cooldown (429) atau dinonaktifkan.",
+          cache: "Cache Hash: Mengelompokkan sesi obrolan yang sama ke kredensial yang sama agar memanfaatkan prompt caching upstream Google secara optimal, menghemat token dan mempercepat respons.",
+          random: "Random Balance: Memilih akun aktif secara acak pada setiap request untuk membagi beban secara merata ke seluruh akun.",
+          sticky: "Sticky Mode: Mengunci seluruh request ke satu akun sampai akun tersebut terkena cooldown (429) atau dinonaktifkan.",
         },
       },
     ],
   },
   {
-    title: "Konfigurasi Respons",
+    category: "routing",
+    title: "Koneksi Proksi & Direktori Kredensial",
+    description: "Konfigurasi rute keluar (outbound proxy) dan lokasi penyimpanan akun.",
     fields: [
-      { key: "return_thoughts_to_frontend", label: "Kirim Reasoning / Thinking ke Klien", type: "bool", note: "Jika aktif, proses berpikir internal (thinking chain) akan disertakan dalam respons" },
-    ],
-  },
-  {
-    title: "Anti-Pemotongan Respons (Anti-Truncation)",
-    fields: [
-      { key: "anti_truncation_max_attempts", label: "Batas Maksimal Percobaan Penyambungan", type: "number", note: "Jumlah maksimal percobaan menyambung jawaban panjang yang terpotong (1-10)" },
-    ],
-  },
-  {
-    title: "Filter Kata Sensitif",
-    fields: [
-      { key: "sensitive_words_enabled", label: "Aktifkan Filter Kata Sensitif", type: "bool", note: "Menyaring kata sensitif agar tidak memicu pemblokiran upstream Google" },
-      { key: "sensitive_words", label: "Daftar Kata Sensitif", type: "textarea", showIf: (cfg) => !!cfg.sensitive_words_enabled, note: "Satu kata/frasa per baris (tidak membedakan huruf besar/kecil)", placeholder: "kata1\nkata2" },
-    ],
-  },
-  {
-    title: "Pemetaan Nama Model (Model Rewrite)",
-    fields: [
-      { key: "model_rewrite_enabled", label: "Aktifkan Pemetaan Nama Model", type: "bool", note: "Memetakan nama model dari klien ke model aktual upstream yang tersedia" },
       {
-        key: "model_rewrite_rules",
-        label: "Daftar Aturan (Regex)",
-        type: "rules",
-        showIf: (cfg) => !!cfg.model_rewrite_enabled,
-        note: "Cocokkan nama model (Regex) → Gantikan dengan model upstream",
+        key: "credentials_dir",
+        label: "Direktori Berkas Kredensial",
+        type: "text",
+        note: "Lokasi folder penyimpanan kredensial akun JSON di server",
+      },
+      {
+        key: "proxy",
+        label: "Proksi Keluar (Outbound Proxy)",
+        type: "text",
+        note: "Mendukung http/https/socks5/socks5h. Kosongkan jika server terhubung langsung ke internet.",
+        placeholder: "http://user:pass@proxy:port atau socks5h://127.0.0.1:1080",
       },
     ],
   },
   {
-    title: "Log Permintaan & Analitik",
+    category: "routing",
+    title: "Konfigurasi Endpoint Upstream Google",
+    description: "Titik akhir layanan Google APIs dan Antigravity.",
+    hasRestoreButton: true,
     fields: [
-      { key: "usage_log_enabled", label: "Aktifkan Pencatatan Log", type: "bool", note: "Mencatat setiap panggilan API (model, token, durasi, status) ke database" },
-      { key: "request_log_enabled", label: "Simpan Detail Request Body saat Terjadi Error", type: "bool", note: "Menyimpan payload JSON permintaan saat menemui status error untuk keperluan debugging" },
-      { key: "request_log_error_codes", label: "Kode Status Error yang Direkam Rinci", type: "csv_numbers", showIf: (cfg) => !!cfg.request_log_enabled, note: "Pisahkan dengan koma (contoh: 400, 429)", placeholder: "400, 429" },
+      {
+        key: "oauth_proxy_url",
+        label: "Endpoint Google OAuth2",
+        type: "text",
+        note: "URL endpoint untuk pembuatan dan penyegaran access token",
+      },
+      {
+        key: "googleapis_proxy_url",
+        label: "Endpoint Google APIs",
+        type: "text",
+        note: "URL endpoint upstream Google APIs",
+      },
+      {
+        key: "antigravity_api_url",
+        label: "Endpoint API Antigravity",
+        type: "text",
+        note: "URL endpoint layanan Cloud Code / Antigravity",
+      },
+    ],
+  },
+  {
+    category: "models",
+    title: "Pemetaan Nama Model (Model Rewrite)",
+    description: "Aliaskan atau ubah nama model klien ke model upstream yang tersedia secara transparan.",
+    fields: [
+      {
+        key: "model_rewrite_enabled",
+        label: "Aktifkan Pemetaan Nama Model",
+        type: "bool",
+        note: "Memetakan request model dari klien (misal gpt-4o) ke model upstream (misal gemini-3.8-flash-high)",
+      },
+      {
+        key: "model_rewrite_rules",
+        label: "Daftar Aturan Regex Pemetaan",
+        type: "rules",
+        showIf: (cfg) => !!cfg.model_rewrite_enabled,
+        note: "Format: Cocokkan Pola Regex → Gantikan dengan Model Target Upstream",
+      },
+    ],
+  },
+  {
+    category: "models",
+    title: "Perilaku Respons & Anti-Pemotongan",
+    description: "Pengaturan pemrosesan token penalaran dan perpanjangan respons teks panjang.",
+    fields: [
+      {
+        key: "return_thoughts_to_frontend",
+        label: "Kirim Reasoning / Thinking Process ke Klien",
+        type: "bool",
+        note: "Jika aktif, proses berpikir internal model disertakan pada output reasoning",
+      },
+      {
+        key: "anti_truncation_max_attempts",
+        label: "Batas Maksimal Percobaan Sambung Teks (Anti-Truncate)",
+        type: "number",
+        note: "Batas pengulangan penyambungan otomatis jika jawaban terpotong batas token (1 - 10)",
+      },
+    ],
+  },
+  {
+    category: "stability",
+    title: "Percobaan Ulang Otomatis (Retry 429)",
+    description: "Penanganan otomatis saat menghadapi batas laju request (Rate Limit) dari Google.",
+    fields: [
+      {
+        key: "retry_429_enabled",
+        label: "Aktifkan Retry Otomatis pada HTTP 429",
+        type: "bool",
+        note: "Otomatis mengulangi permintaan jika terkena pembatasan laju",
+      },
+      {
+        key: "retry_429_max_retries",
+        label: "Maksimal Percobaan Pengulangan",
+        type: "number",
+        note: "Jumlah pengulangan maksimal sebelum mengembalikan error ke klien (1 - 10)",
+      },
+      {
+        key: "retry_429_interval",
+        label: "Jeda Waktu Antar Percobaan (Detik)",
+        type: "number",
+        note: "Waktu tunggu sebelum mencoba akun berikutnya (0 untuk langsung)",
+      },
+    ],
+  },
+  {
+    category: "stability",
+    title: "Pemblokiran Akun Otomatis (Auto-Ban)",
+    description: "Lindungi rotasi dari akun yang sudah tidak valid atau diblokir.",
+    fields: [
+      {
+        key: "auto_ban_enabled",
+        label: "Aktifkan Auto-Ban Otomatis",
+        type: "bool",
+        note: "Otomatis menonaktifkan kredensial jika terus-menerus mengembalikan kode error kritis",
+      },
+      {
+        key: "auto_ban_error_codes",
+        label: "Daftar Kode Status Error Pemicu Auto-Ban",
+        type: "text",
+        note: "Format array JSON kode error, contoh: [403, 400]",
+      },
+    ],
+  },
+  {
+    category: "logs",
+    title: "Pencatatan Riwayat & Debugging",
+    description: "Pantau penggunaan token, waktu respons, dan payload permintaan untuk audit.",
+    fields: [
+      {
+        key: "usage_log_enabled",
+        label: "Aktifkan Pencatatan Riwayat Permintaan (Usage Logs)",
+        type: "bool",
+        note: "Mencatat timestamp, nama model, jumlah token, dan durasi ke database SQLite",
+      },
+      {
+        key: "request_log_enabled",
+        label: "Rekam Rinci Body Permintaan saat Terjadi Error",
+        type: "bool",
+        note: "Berguna untuk investigasi dan debugging saat terjadi kegagalan pemanggilan API",
+      },
+      {
+        key: "request_log_error_codes",
+        label: "Kode Status Error yang Direkam Rinci",
+        type: "csv_numbers",
+        showIf: (cfg) => !!cfg.request_log_enabled,
+        note: "Pisahkan dengan koma kode status HTTP (contoh: 400, 429)",
+        placeholder: "400, 429",
+      },
     ],
   },
 ];
@@ -162,6 +339,10 @@ export default function Config() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showPasswords, setShowPasswords] = useState({});
+  const [copiedKey, setCopiedKey] = useState(null);
 
   useEffect(() => {
     loadConfig();
@@ -175,7 +356,10 @@ export default function Config() {
       setEnvLocked(res.data.env_locked || []);
       if (!silent) setMessage(null);
     } catch (err) {
-      setMessage({ type: "error", text: err.response?.data?.detail || "Gagal memuat konfigurasi" });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.detail || "Gagal memuat konfigurasi server",
+      });
     } finally {
       setLoading(false);
     }
@@ -185,10 +369,16 @@ export default function Config() {
     setSaving(true);
     try {
       const res = await api.post("/config/save", { config });
-      setMessage({ type: "success", text: res.data.message || "Pengaturan berhasil disimpan" });
+      setMessage({
+        type: "success",
+        text: res.data.message || "Pengaturan berhasil diperbarui dan disimpan",
+      });
       await loadConfig({ silent: true });
     } catch (err) {
-      setMessage({ type: "error", text: err.response?.data?.detail || "Gagal menyimpan pengaturan" });
+      setMessage({
+        type: "error",
+        text: err.response?.data?.detail || "Gagal menyimpan perubahan pengaturan",
+      });
     } finally {
       setSaving(false);
     }
@@ -196,6 +386,16 @@ export default function Config() {
 
   const setField = (key, value) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const togglePasswordVisibility = (key) => {
+    setShowPasswords((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const copyValue = (text, key) => {
+    navigator.clipboard.writeText(String(text || ""));
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
   };
 
   const OFFICIAL_ENDPOINTS = {
@@ -214,51 +414,122 @@ export default function Config() {
     });
   };
 
+  // Filter kelompok berdasarkan kategori aktif dan pencarian
+  const filteredGroups = useMemo(() => {
+    let groups = CONFIG_GROUPS;
+    if (activeCategory !== "all") {
+      groups = groups.filter((g) => g.category === activeCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      groups = groups
+        .map((g) => {
+          const matchedFields = g.fields.filter(
+            (f) =>
+              f.label.toLowerCase().includes(q) ||
+              f.key.toLowerCase().includes(q) ||
+              (f.note && f.note.toLowerCase().includes(q))
+          );
+          if (
+            g.title.toLowerCase().includes(q) ||
+            g.description?.toLowerCase().includes(q) ||
+            matchedFields.length > 0
+          ) {
+            return { ...g, fields: matchedFields.length > 0 ? matchedFields : g.fields };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    }
+    return groups;
+  }, [activeCategory, searchQuery]);
+
   const renderField = (field) => {
     const isLocked = envLocked.includes(field.key);
     const value = config[field.key] ?? "";
 
     if (isLocked) {
       return (
-        <div className="text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-          Nilai ini terkunci oleh variabel environment (.env / OS). Ubah variabel environment untuk menggantinya.
+        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3.5 py-2.5">
+          <Lock size={14} className="shrink-0" />
+          <span>Nilai ini dikunci melalui variabel lingkungan (.env / OS).</span>
         </div>
       );
     }
 
     if (field.type === "bool") {
       return (
-        <label className="flex items-center gap-3 cursor-pointer select-none">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setField(field.key, !value)}
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              value ? "bg-purple-600" : "bg-dark-600"
+            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none ${
+              value ? "bg-purple-600 shadow-sm shadow-purple-600/50" : "bg-dark-700"
             }`}
           >
             <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                value ? "translate-x-5" : ""
+              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-md ${
+                value ? "translate-x-6" : ""
               }`}
             />
           </button>
-          <span className="text-sm text-gray-300">{value ? "Aktif" : "Nonaktif"}</span>
-        </label>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+              value
+                ? "bg-purple-500/15 text-purple-300 border-purple-500/30"
+                : "bg-dark-800 text-gray-500 border-dark-600"
+            }`}
+          >
+            {value ? "Aktif" : "Nonaktif"}
+          </span>
+        </div>
+      );
+    }
+
+    if (field.type === "password_toggle") {
+      const isVisible = !!showPasswords[field.key];
+      return (
+        <div className="flex items-center gap-2 max-w-lg">
+          <div className="relative flex-1">
+            <input
+              type={isVisible ? "text" : "password"}
+              value={value}
+              onChange={(e) => setField(field.key, e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm font-mono text-purple-300 focus:outline-none focus:border-purple-500 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => togglePasswordVisibility(field.key)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              {isVisible ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => copyValue(value, field.key)}
+            className="btn btn-secondary px-3 py-2.5 text-xs shrink-0"
+            title="Salin nilai"
+          >
+            {copiedKey === field.key ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+          </button>
+        </div>
       );
     }
 
     if (field.type === "select") {
       const current = field.options.find((o) => o.value === value) || field.options[0];
       return (
-        <div className="space-y-2">
+        <div className="space-y-2.5 max-w-xl">
           <Select
             value={current?.value ?? ""}
             onChange={(v) => setField(field.key, v)}
             options={field.options}
-            className="w-full sm:w-72"
+            className="w-full"
           />
           {field.descriptions && current && (
-            <div className="bg-dark-800/60 border border-dark-600 rounded-lg p-3 text-xs sm:text-sm text-gray-300 leading-relaxed">
+            <div className="bg-dark-900/90 border border-purple-500/20 rounded-xl p-3.5 text-xs text-purple-200 leading-relaxed shadow-sm">
+              <span className="font-semibold text-purple-300 mr-1.5">Penjelasan:</span>
               {field.descriptions[current.value]}
             </div>
           )}
@@ -268,11 +539,13 @@ export default function Config() {
 
     if (field.type === "csv_numbers") {
       return (
-        <CsvNumbersField
-          value={value}
-          onChange={(v) => setField(field.key, v)}
-          placeholder={field.placeholder}
-        />
+        <div className="max-w-lg">
+          <CsvNumbersField
+            value={value}
+            onChange={(v) => setField(field.key, v)}
+            placeholder={field.placeholder}
+          />
+        </div>
       );
     }
 
@@ -292,10 +565,10 @@ export default function Config() {
         setField(field.key, [...rules, ["", ""]]);
       };
       return (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {rules.length === 0 && (
-            <div className="text-xs text-gray-500 bg-dark-800/60 border border-dark-700 rounded-lg px-3 py-2">
-              Belum ada aturan pemetaan. Klik tombol di bawah untuk menambah.
+            <div className="text-xs text-gray-500 bg-dark-900 border border-dark-700 rounded-xl px-4 py-3">
+              Belum ada aturan pemetaan. Klik tombol di bawah untuk menambah pemetaan nama model kustom.
             </div>
           )}
           {rules.map((rule, idx) => (
@@ -304,16 +577,16 @@ export default function Config() {
                 type="text"
                 value={rule[0]}
                 onChange={(e) => updateRule(idx, 0, e.target.value)}
-                placeholder="Pola Regex (cth: ^gpt-4$)"
-                className="flex-1 min-w-0 px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-white placeholder-gray-500 font-mono"
+                placeholder="Pola Regex Klien (cth: ^gpt-4o$)"
+                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono"
               />
-              <span className="text-gray-500 text-sm shrink-0">→</span>
+              <span className="text-purple-400 text-sm shrink-0 font-bold">→</span>
               <input
                 type="text"
                 value={rule[1]}
                 onChange={(e) => updateRule(idx, 1, e.target.value)}
-                placeholder="Model Target (cth: gemini-2.5-pro)"
-                className="flex-1 min-w-0 px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-white placeholder-gray-500 font-mono"
+                placeholder="Model Target (cth: gemini-3.8-flash-high)"
+                className="flex-1 min-w-0 px-3.5 py-2 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono"
               />
               <button
                 type="button"
@@ -328,7 +601,7 @@ export default function Config() {
           <button
             type="button"
             onClick={addRule}
-            className="btn btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
+            className="btn btn-secondary text-xs px-3.5 py-2 flex items-center gap-1.5"
           >
             <Plus size={14} />
             Tambah Aturan Pemetaan
@@ -343,11 +616,14 @@ export default function Config() {
           value={Array.isArray(value) ? value.join("\n") : value || ""}
           onChange={(e) => {
             const lines = e.target.value === "" ? [] : e.target.value.split("\n");
-            setField(field.key, lines.map((w) => w.replace(/\s+$/, "")).filter((w) => w.trim() !== ""))
+            setField(
+              field.key,
+              lines.map((w) => w.replace(/\s+$/, "")).filter((w) => w.trim() !== "")
+            );
           }}
           placeholder={field.placeholder}
-          rows={6}
-          className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-white placeholder-gray-500 font-mono"
+          rows={5}
+          className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
         />
       );
     }
@@ -363,83 +639,155 @@ export default function Config() {
           )
         }
         placeholder={field.placeholder}
-        className="w-full px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-sm text-white placeholder-gray-500"
+        className="w-full max-w-lg px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
       />
     );
   };
 
   return (
     <div className="space-y-6">
-      {/* Tombol Aksi Tetap di Atas */}
-      <div className="sticky top-0 z-30 -mx-1 px-1 py-2 bg-dark-950/95 backdrop-blur border-b border-dark-700 rounded-lg">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadConfig}
-            disabled={loading}
-            className="btn btn-secondary text-sm flex items-center gap-1.5"
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            Segarkan Pengaturan
-          </button>
-          <button
-            onClick={saveConfig}
-            disabled={saving || loading}
-            className="btn btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            {saving ? "Menyimpan..." : "Simpan Pengaturan"}
-          </button>
+      {/* Header Sticky Action Bar */}
+      <div className="sticky top-[73px] z-20 bg-dark-900/95 backdrop-blur-md border border-dark-700/80 rounded-2xl p-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="p-2 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+              <Sliders size={18} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">Pengaturan Gateway</h2>
+              <p className="text-xs text-gray-400">Konfigurasi jaringan, keamanan, rotasi akun, dan perilaku model</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => loadConfig()}
+              disabled={loading || saving}
+              className="btn btn-secondary text-xs sm:text-sm px-3.5 py-2 flex items-center gap-1.5"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Segarkan
+            </button>
+            <button
+              onClick={saveConfig}
+              disabled={saving || loading}
+              className="btn btn-primary text-xs sm:text-sm px-4 py-2 flex items-center gap-1.5 shadow-lg shadow-purple-600/20"
+            >
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+              {saving ? "Menyimpan..." : "Simpan Perubahan"}
+            </button>
+          </div>
+        </div>
+
+        {/* Baris Kategori & Pencarian */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 mt-4 pt-3 border-t border-dark-700/60">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 whitespace-nowrap transition-all ${
+                    isActive
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "bg-dark-800 text-gray-400 hover:text-white hover:bg-dark-700"
+                  }`}
+                >
+                  <Icon size={13} />
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="relative w-full md:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari pengaturan..."
+              className="w-full pl-8 pr-3 py-1.5 bg-dark-800 border border-dark-600 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
+            />
+          </div>
         </div>
       </div>
 
       {/* Modal Notifikasi */}
       {message && (
-        <Modal type={message.type} title={message.type === "success" ? "Berhasil" : "Gagal"} onClose={() => setMessage(null)}>
-          <span className="whitespace-pre-wrap break-all">{message.text}</span>
+        <Modal
+          type={message.type}
+          title={message.type === "success" ? "Berhasil Disimpan" : "Gagal Memperbarui"}
+          onClose={() => setMessage(null)}
+        >
+          <span className="whitespace-pre-wrap break-all text-sm">{message.text}</span>
         </Modal>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="animate-spin text-purple-500" size={28} />
+        <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
+          <Loader2 className="animate-spin text-purple-500" size={32} />
+          <p className="text-sm">Memuat pengaturan dari database...</p>
         </div>
       ) : (
         <div className="space-y-6">
-          {CONFIG_GROUPS.map((group) => (
-            <div key={group.title} className="card">
-              <h3 className="text-base font-semibold text-purple-400 mb-4 border-b border-dark-700 pb-3">
-                {group.title}
-              </h3>
-
-              {group.title === "Konfigurasi Endpoint" && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <button
-                    type="button"
-                    onClick={restoreOfficialUrls}
-                    className="btn btn-secondary text-xs px-3 py-1.5"
-                  >
-                    🔄 Kembalikan ke Endpoint Resmi Google
-                  </button>
-                </div>
-              )}
-
-              <div className="space-y-5">
-                {group.fields
-                  .filter((field) => !field.showIf || field.showIf(config))
-                  .map((field) => (
-                    <div key={field.key}>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                        {field.label}
-                      </label>
-                      {renderField(field)}
-                      {field.note && (
-                        <p className="text-xs text-gray-500 mt-1.5">{field.note}</p>
-                      )}
-                    </div>
-                  ))}
-              </div>
+          {filteredGroups.length === 0 ? (
+            <div className="card text-center py-12 text-gray-400 space-y-2">
+              <Filter size={28} className="mx-auto text-gray-600" />
+              <p className="text-sm">Tidak ada pengaturan yang cocok dengan kata kunci "{searchQuery}".</p>
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setActiveCategory("all");
+                }}
+                className="text-xs text-purple-400 hover:underline pt-1"
+              >
+                Reset Filter Pencarian
+              </button>
             </div>
-          ))}
+          ) : (
+            filteredGroups.map((group) => (
+              <div key={group.title} className="card p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-dark-700 gap-2">
+                  <div>
+                    <h3 className="text-base font-bold text-white tracking-tight">{group.title}</h3>
+                    {group.description && (
+                      <p className="text-xs text-gray-400 mt-0.5">{group.description}</p>
+                    )}
+                  </div>
+
+                  {group.hasRestoreButton && (
+                    <button
+                      type="button"
+                      onClick={restoreOfficialUrls}
+                      className="btn btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5 self-start"
+                    >
+                      <RefreshCw size={12} />
+                      Kembalikan Endpoint Resmi
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-5">
+                  {group.fields
+                    .filter((field) => !field.showIf || field.showIf(config))
+                    .map((field) => (
+                      <div key={field.key} className="space-y-1.5">
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-gray-300">
+                          {field.label}
+                        </label>
+                        {renderField(field)}
+                        {field.note && (
+                          <p className="text-[11px] text-gray-500 leading-normal">{field.note}</p>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
