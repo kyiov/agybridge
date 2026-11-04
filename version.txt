@@ -1,4 +1,4 @@
-full_hash=61a2c080c0be84fc74037cebde917cfd8021b241
-short_hash=61a2c08
-message=docs: update repository clone URLs to kyiov/agybridge
-date=2026-11-04 09:04:38 +0000
+full_hash=1e25d1e1d1d2647b9e838b4ae28b30c39131fa9a
+short_hash=1e25d1e
+message=docs: add fork attribution and acknowledgements to agy2api
+date=2026-11-04 09:08:37 +0000
