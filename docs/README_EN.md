@@ -5,6 +5,9 @@
   <p>High-performance proxy gateway featuring multi-account rotation, model-level cooldown isolation, intelligent prompt caching, and real-time observability.</p>
 </div>
 
+> [!NOTE]
+> **AGYBridge** is an independently modernized fork of [agy2api](https://github.com/su-kaka/agy2api). It features a completely refactored codebase (zero non-standard character remnants), bilingual documentation, modernized dashboard typography (Inter & JetBrains Mono), and enhanced gateway stability.
+
 ---
 
 ## ⚡ Key Highlights
@@ -129,6 +132,19 @@ cd frontend
 bun install
 bun run build
 ```
+
+---
+
+## 🙏 Acknowledgements & Attribution
+
+This project is built upon the foundational work of the open-source community:
+- Originates from [`agy2api`](https://github.com/su-kaka/agy2api) created by [su-kaka](https://github.com/su-kaka).
+- **AGYBridge** continues development as an independent, modernized downstream release focused on:
+  - **Complete Localization & Clean Code:** Refactored codebase, zero non-standard character remnants, and comprehensive documentation in English and Indonesian.
+  - **Overhauled UI & Typography:** Modernized React dashboard utilizing **Inter** and **JetBrains Mono** font hierarchy.
+  - **Security & Cross-Platform Tooling:** Hardened secrets handling, updated cross-platform automation (Linux, macOS, Termux, Windows), and modern package toolchains.
+
+Special thanks and appreciation to the original author and upstream contributors for their foundational work.
 
 ---
 

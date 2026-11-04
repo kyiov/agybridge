@@ -16,6 +16,9 @@
   <a href="#-fitur-utama"><img src="https://img.shields.io/badge/Status-Active-brightgreen.svg?style=flat-square" alt="Status" /></a>
 </p>
 
+> [!NOTE]
+> **AGYBridge** adalah fork mandiri yang dimodernisasi dari proyek [agy2api](https://github.com/su-kaka/agy2api). Proyek ini menghadirkan pembersihan kode menyeluruh (*zero Chinese/watermark*), pembaruan antarmuka modern (Inter & JetBrains Mono), serta peningkatan keandalan gateway.
+
 ---
 
 ## 🌟 Fitur Utama
@@ -212,6 +215,19 @@ bun run build
 ```
 
 Backend secara otomatis menyajikan berkas hasil kompilasi dari direktori `dist/` tanpa membutuhkan server Node.js terpisah saat produksi.
+
+---
+
+## 🙏 Pengakuan & Atribusi (Attribution)
+
+Proyek ini dibangun berdasarkan fondasi luar biasa dari komunitas *open-source*:
+- Berakar dari proyek awal [`agy2api`](https://github.com/su-kaka/agy2api) yang dirintis oleh [su-kaka](https://github.com/su-kaka).
+- **AGYBridge** melanjutkan pengembangannya secara mandiri (*independent modernized fork*) dengan fokus pada:
+  - **Refactoring & Lokalisasi Penuh:** Seluruh basis kode dibersihkan dari karakter non-standar (*zero Chinese / zero watermark*), struktur penamaan yang konsisten, dan dokumentasi dwi-bahasa (Indonesia & Inggris).
+  - **Modernisasi Antarmuka & Tipografi:** Redesain panel kontrol web berbasis React & Tailwind CSS dengan hierarki tipografi **Inter** dan **JetBrains Mono**, tema gelap yang elegan, dan tata letak yang lebih responsif.
+  - **Penyempurnaan Keamanan & Multi-Platform:** Penanganan token dan rahasia yang lebih aman, skrip instalasi lintas-platform (Linux, macOS Darwin, Termux Android, Windows PowerShell), serta pembaruan dependensi modern.
+
+Apresiasi dan terima kasih yang mendalam disampaikan kepada kreator asli dan seluruh kontributor *upstream*.
 
 ---
 
