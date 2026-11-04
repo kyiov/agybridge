@@ -1,4 +1,4 @@
-full_hash=1e25d1e1d1d2647b9e838b4ae28b30c39131fa9a
-short_hash=1e25d1e
-message=docs: add fork attribution and acknowledgements to agy2api
-date=2026-11-04 09:08:37 +0000
+full_hash=b93a3d186454301d8d69a2807423b6dcc1b8f9f1
+short_hash=b93a3d1
+message=feat: add One-Click Google OAuth flow and Coding Agent preset exporter (Cursor, Claude Code, Cline, Continue.dev)
+date=2026-11-04 09:40:22 +0000
