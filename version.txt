@@ -1,4 +1,4 @@
-full_hash=2fba793ceaaf6af06f49b7116bb1834712519baa
-short_hash=2fba793
-message=style: overhaul settings UI, enrich README docs, and subtle fork attribution
-date=2026-11-04 09:46:26 +0000
+full_hash=296bba4cc9efca537db80019b74f0eb48acb9ac5
+short_hash=296bba4
+message=Update API key references in README.md
+date=2026-11-05 14:45:01 +0000
