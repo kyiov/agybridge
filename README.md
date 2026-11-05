@@ -88,7 +88,7 @@ Buka tab **Preset Coding Agent** di panel web (`http://localhost:7861`) untuk me
 
 ### 1. Cursor IDE
 1. Buka **Cursor Settings** (`Ctrl/Cmd + Shift + J`) > **Models**.
-2. Di bagian **OpenAI API Key**, masukkan kunci API Anda (default: `muharpolnep098`).
+2. Di bagian **OpenAI API Key**, masukkan kunci API Anda (default: `sk-`).
 3. Aktifkan **Override OpenAI Base URL**, masukkan:
    ```text
    http://127.0.0.1:7861/v1
@@ -100,7 +100,7 @@ Buka tab **Preset Coding Agent** di panel web (`http://localhost:7861`) untuk me
 Jalankan di terminal proyek Anda sebelum memanggil CLI `claude`:
 ```bash
 export ANTHROPIC_BASE_URL="http://127.0.0.1:7861/v1"
-export ANTHROPIC_AUTH_TOKEN="muharpolnep098"
+export ANTHROPIC_AUTH_TOKEN="sk-"
 export CLAUDE_MODEL="claude-sonnet-4-6"
 
 claude
@@ -110,7 +110,7 @@ claude
 ### 3. Cline / Roo Code (VS Code Extension)
 - **API Provider:** `OpenAI-Compatible`
 - **Base URL:** `http://127.0.0.1:7861/v1`
-- **API Key:** Kata sandi API Anda (`muharpolnep098`)
+- **API Key:** Kata sandi API Anda (`sk-`)
 - **Model ID:** `gemini-3.8-flash-high` atau `claude-sonnet-4-6`
 
 ### 4. Continue.dev
@@ -122,14 +122,14 @@ Tambahkan blok model ke berkas `~/.continue/config.json`:
       "title": "AGYBridge - Gemini 3.8",
       "provider": "openai",
       "model": "gemini-3.8-flash-high",
-      "apiKey": "muharpolnep098",
+      "apiKey": "sk-",
       "apiBase": "http://127.0.0.1:7861/v1"
     },
     {
       "title": "AGYBridge - Claude Sonnet 4.6",
       "provider": "openai",
       "model": "claude-sonnet-4-6",
-      "apiKey": "muharpolnep098",
+      "apiKey": "sk-",
       "apiBase": "http://127.0.0.1:7861/v1"
     }
   ]
@@ -139,7 +139,7 @@ Tambahkan blok model ke berkas `~/.continue/config.json`:
 ### 5. Aider AI Pair Programming
 ```bash
 aider --openai-api-base "http://127.0.0.1:7861/v1" \
-      --openai-api-key "muharpolnep098" \
+      --openai-api-key "sk-" \
       --model "openai/gemini-3.8-flash-high"
 ```
 
@@ -200,7 +200,7 @@ Buka browser Anda di `http://127.0.0.1:7861` untuk mengakses Panel Kontrol.
 ### 1. Format OpenAI (`/v1/chat/completions`)
 ```bash
 curl -X POST "http://localhost:7861/v1/chat/completions" \
-  -H "Authorization: Bearer muharpolnep098" \
+  -H "Authorization: Bearer sk-" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "gemini-3.8-flash-high",
@@ -214,7 +214,7 @@ curl -X POST "http://localhost:7861/v1/chat/completions" \
 ### 2. Format Anthropic Claude (`/v1/messages`)
 ```bash
 curl -X POST "http://localhost:7861/v1/messages" \
-  -H "x-api-key: muharpolnep098" \
+  -H "x-api-key: sk-" \
   -H "anthropic-version: 2023-06-01" \
   -H "Content-Type: application/json" \
   -d '{
@@ -232,7 +232,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="http://127.0.0.1:7861/v1",
-    api_key="muharpolnep098"
+    api_key="sk-"
 )
 
 response = client.chat.completions.create(
