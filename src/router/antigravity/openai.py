@@ -19,6 +19,7 @@ from log import log
 
 from src.utils import (
     get_base_model_from_feature_model,
+    resolve_upstream_model,
     is_anti_truncation_model,
     authenticate_bearer,
 )
@@ -64,7 +65,7 @@ async def chat_completions(
         return JSONResponse(content=response)
 
     use_anti_truncation = is_anti_truncation_model(openai_request.model)
-    real_model = get_base_model_from_feature_model(openai_request.model)
+    real_model = resolve_upstream_model(openai_request.model)
     is_streaming = openai_request.stream
 
     if use_anti_truncation and not is_streaming:
@@ -117,7 +118,7 @@ async def chat_completions(
 
         openai_response = convert_gemini_to_openai_response(
             gemini_response,
-            real_model,
+            openai_request.model,
             status_code
         )
 
@@ -178,7 +179,7 @@ async def chat_completions(
                         gemini_chunk = json.loads(data_str)
                         openai_chunks = convert_gemini_to_openai_stream(
                             gemini_chunk,
-                            real_model,
+                            openai_request.model,
                             response_id
                         )
 
@@ -238,7 +239,7 @@ async def chat_completions(
                         gemini_chunk = json.loads(data_str)
                         openai_chunks = convert_gemini_to_openai_stream(
                             gemini_chunk,
-                            real_model,
+                            openai_request.model,
                             response_id
                         )
 

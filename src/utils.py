@@ -54,6 +54,14 @@ CALLBACK_HOST = "localhost"
 
 _ANTI_TRUNCATION_PREFIXES = ("anti-truncate-", "notrunc-")
 
+_MODEL_ALIASES = {
+    "argon": "gemini-3.8-flash-high",
+    "argon-4": "gemini-3.8-flash-high",
+    "gemini-4-argon": "gemini-3.8-flash-high",
+    "gemini-4.0-argon": "gemini-3.8-flash-high",
+    "gemini-4-argon-thinking": "gemini-3.8-flash-high",
+}
+
 
 def is_anti_truncation_model(model_name: str) -> bool:
     """Check if model name indicates anti-truncation should be used."""
@@ -66,6 +74,17 @@ def get_base_model_from_feature_model(model_name: str) -> str:
         if model_name.startswith(prefix):
             return model_name[len(prefix):]
     return model_name
+
+
+def resolve_upstream_model(model_name: str) -> str:
+    """Map model name to the active upstream model."""
+    cleaned = (model_name or "").strip()
+    if cleaned.startswith("models/"):
+        cleaned = cleaned[7:]
+    base = get_base_model_from_feature_model(cleaned)
+    if base.startswith("models/"):
+        base = base[7:]
+    return _MODEL_ALIASES.get(base.lower(), base)
 
 
 # ====================== Authentication Functions ======================

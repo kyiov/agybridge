@@ -269,6 +269,7 @@ async def get_agent_presets(token: str = Depends(verify_panel_token)):
 
         recommended_models = [
             {"id": "gemini-3.8-flash-high", "name": "Gemini 3.8 Flash High", "desc": "Kecepatan ultra, penalaran tingkat tinggi (Default)", "badge": "Rekomendasi"},
+            {"id": "argon-4", "name": "Argon 4", "desc": "Model reasoning generasi berikutnya (Gemini 4 / Argon)", "badge": "Flagship"},
             {"id": "claude-sonnet-4-6", "name": "Claude Sonnet 4.6", "desc": "Presisi coding terbaik untuk refactoring rumit", "badge": "Coding Pro"},
             {"id": "gemini-2.5-pro", "name": "Gemini 2.5 Pro", "desc": "Kapasitas konteks besar dan pemecahan masalah kompleks", "badge": "Arsitektur"},
             {"id": "gemini-2.5-flash", "name": "Gemini 2.5 Flash", "desc": "Ringan dan sangat responsif untuk tugas sehari-hari", "badge": "Cepat"},

@@ -25,6 +25,7 @@ from log import log
 # Local modules - Utilities and Auth
 from src.utils import (
     get_base_model_from_feature_model,
+    resolve_upstream_model,
     is_anti_truncation_model,
     authenticate_gemini_flexible,
 )
@@ -86,7 +87,7 @@ async def generate_content(
 
     # Process model name and feature detection
     use_anti_truncation = is_anti_truncation_model(model)
-    real_model = get_base_model_from_feature_model(model)
+    real_model = resolve_upstream_model(model)
 
     # Warn if anti-truncation model is used for non-streaming
     if use_anti_truncation:
@@ -152,7 +153,7 @@ async def stream_generate_content(
 
     # Process model name and feature detection
     use_anti_truncation = is_anti_truncation_model(model)
-    real_model = get_base_model_from_feature_model(model)
+    real_model = resolve_upstream_model(model)
 
     # Update model name
     normalized_dict["model"] = real_model

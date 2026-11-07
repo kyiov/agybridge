@@ -18,6 +18,7 @@ from log import log
 
 from src.utils import (
     get_base_model_from_feature_model,
+    resolve_upstream_model,
     is_anti_truncation_model,
     authenticate_bearer,
 )
@@ -64,7 +65,7 @@ async def messages(
         return JSONResponse(content=response)
 
     use_anti_truncation = is_anti_truncation_model(claude_request.model)
-    real_model = get_base_model_from_feature_model(claude_request.model)
+    real_model = resolve_upstream_model(claude_request.model)
     is_streaming = claude_request.stream
 
     if use_anti_truncation and not is_streaming:

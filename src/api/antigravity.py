@@ -935,6 +935,14 @@ async def fetch_available_models() -> List[Dict[str, Any]]:
                 )
                 model_list.append(model_to_dict(claude_opus_model))
 
+            if not any(m.get("id") == "argon-4" for m in model_list):
+                model_list.append(model_to_dict(Model(
+                    id="argon-4",
+                    object='model',
+                    created=current_timestamp,
+                    owned_by='google'
+                )))
+
             log.info(f"[ANTIGRAVITY] Fetched {len(model_list)} available models")
             return model_list
         else:
