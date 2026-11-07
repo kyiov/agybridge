@@ -18,6 +18,7 @@ from config import (
     get_auto_ban_error_codes,
     get_request_log_enabled,
     get_request_log_error_codes,
+    get_usage_log_enabled,
 )
 from log import log
 
@@ -120,11 +121,10 @@ async def wrap_cli_request(
     Wrap Gemini format request into Antigravity CLI format.
     Returns (payload, request_id).
     """
-    inner = copy.deepcopy(gemini_request)
+    # Shallow copy + rebuild only the layers that need modification,
+    # avoiding expensive deepcopy overhead on large payloads (long chat histories).
+    inner = dict(gemini_request)
     first_user_text = _extract_first_user_text(inner)
-
-    # Remove safetySettings (CLI does not send them)
-    inner.pop("safetySettings", None)
 
     # Inject sessionId
     session_id = str(inner.get("sessionId") or "").strip()
@@ -140,10 +140,12 @@ async def wrap_cli_request(
     # Inject labels
     inner["labels"] = _build_labels(model, session_id, 1)
 
-    # toolConfig defaults to VALIDATED
-    tool_config = inner.get("toolConfig") or {}
-    func_config = tool_config.get("functionCallingConfig") or {}
+    # toolConfig defaults to VALIDATED (rebuild these layers so caller's dict is not mutated)
+    src_tool_config = inner.get("toolConfig") or {}
+    src_func_config = src_tool_config.get("functionCallingConfig") or {}
+    func_config = dict(src_func_config)
     func_config["mode"] = "VALIDATED"
+    tool_config = dict(src_tool_config)
     tool_config["functionCallingConfig"] = func_config
     inner["toolConfig"] = tool_config
 
@@ -495,15 +497,19 @@ async def stream_request(
                         success_recorded = True
                         log.debug(f"[ANTIGRAVITY STREAM] Began receiving streaming response, model: {model_name}")
 
-                    if native is False:
+                    # Extract token usage from stream chunk (hot path optimization):
+                    # usageMetadata almost only appears at the tail chunk of the stream.
+                    # Fast substring check before full JSON parsing.
+                    if native is False and (b"usageMetadata" in chunk if isinstance(chunk, bytes) else "usageMetadata" in chunk):
                         extracted = extract_usage_tokens(chunk)
                         if extracted:
                             usage_tokens = extracted
 
-                    if isinstance(chunk, bytes):
-                        log.debug(f"[ANTIGRAVITY STREAM RAW] chunk(bytes): {chunk}")
-                    else:
-                        log.debug(f"[ANTIGRAVITY STREAM RAW] chunk(str): {chunk}")
+                    if log.is_enabled("debug"):
+                        if isinstance(chunk, bytes):
+                            log.debug(f"[ANTIGRAVITY STREAM RAW] chunk(bytes): {chunk}")
+                        else:
+                            log.debug(f"[ANTIGRAVITY STREAM RAW] chunk(str): {chunk}")
 
                     yield chunk
 
@@ -626,7 +632,10 @@ async def non_stream_request(
             is_stream=False,
         )
 
-        tokens = extract_usage_tokens(response_content) if success else {}
+        # Skip token extraction if usage log is disabled (avoids unnecessary full JSON parsing)
+        tokens = {}
+        if success and await get_usage_log_enabled():
+            tokens = extract_usage_tokens(response_content)
         await record_usage_log({
             **log_entry,
             "credential_email": current_file,

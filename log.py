@@ -68,6 +68,19 @@ def get_log_level() -> str:
     return "info"
 
 
+def is_enabled(level: str = "info") -> bool:
+    """Check if the specified log level is currently enabled.
+
+    Used on hot paths to avoid expensive string formatting or JSON serialization
+    when debug logging is disabled:
+        if log.is_enabled("debug"):
+            log.debug(f"expensive {data}")
+    """
+    if not _log_enabled:
+        return False
+    return LOG_LEVELS.get(level, LOG_LEVELS["info"]) >= _cached_log_level
+
+
 # Logging interface: log.debug/info/warning/error/critical(message)
 log = SimpleNamespace(
     debug=lambda message: _log("debug", message),
@@ -75,6 +88,7 @@ log = SimpleNamespace(
     warning=lambda message: _log("warning", message),
     error=lambda message: _log("error", message),
     critical=lambda message: _log("critical", message),
+    is_enabled=is_enabled,
 )
 
-__all__ = ["log", "set_log_level", "get_log_level", "LOG_LEVELS"]
+__all__ = ["log", "set_log_level", "get_log_level", "LOG_LEVELS", "is_enabled"]
