@@ -57,7 +57,7 @@ export default function Presets() {
     fetchPresetsConfig();
   }, []);
 
-  const apiKey = configData.api_password || "muharpolnep098";
+  const apiKey = configData.api_password || "sk-";
 
   // Calculate Base URL
   const baseUrl = useMemo(() => {
