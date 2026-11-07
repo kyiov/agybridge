@@ -60,6 +60,8 @@ export default function UploadPage() {
           <p className="mb-1 font-medium text-gray-400">Format JSON Baku:</p>
           <pre className="text-emerald-300/80 whitespace-pre-wrap font-mono">{`{
   "refresh_token": "Wajib",
+  "access_token": "Opsional (langsung digunakan jika belum expired)",
+  "expiry": "Opsional (waktu kadaluarsa access_token)",
   "email": "Opsional (diambil otomatis jika kosong)",
   "tier": "Opsional (diambil otomatis jika kosong)",
   "project_id": "Opsional (diambil otomatis jika kosong)"

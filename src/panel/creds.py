@@ -62,17 +62,34 @@ async def _import_single_credential(data: Dict[str, Any]) -> Dict[str, Any]:
         email = (data.get("email") or "").strip().lower() or None
         tier = (data.get("tier") or "").strip().lower() or None
         project_id = (data.get("project_id") or "").strip() or None
+        access_token = (str(data.get("access_token") or "")).strip()
+        expiry = (str(data.get("expiry") or "")).strip()
 
-        creds = Credentials(
-            access_token="",
-            refresh_token=refresh_token,
-            client_id=ANTIGRAVITY_CLIENT_ID,
-            client_secret=ANTIGRAVITY_CLIENT_SECRET,
-        )
-        try:
-            await creds.refresh()
-        except Exception as e:
-            return {"status": "error", "message": f"refresh_token tidak valid: {str(e)[:200]}"}
+        # Gunakan access_token yang belum expired langsung jika tersedia (menghindari rate limit refresh)
+        creds = None
+        if access_token:
+            candidate = Credentials.from_dict({
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "client_id": ANTIGRAVITY_CLIENT_ID,
+                "client_secret": ANTIGRAVITY_CLIENT_SECRET,
+                "expiry": expiry,
+            })
+            if not candidate.is_expired():
+                creds = candidate
+
+        # Jika access_token tidak ada atau sudah expired, refresh dengan refresh_token
+        if creds is None:
+            creds = Credentials(
+                access_token="",
+                refresh_token=refresh_token,
+                client_id=ANTIGRAVITY_CLIENT_ID,
+                client_secret=ANTIGRAVITY_CLIENT_SECRET,
+            )
+            try:
+                await creds.refresh()
+            except Exception as e:
+                return {"status": "error", "message": f"refresh_token tidak valid: {str(e)[:200]}"}
 
         if not creds.access_token:
             return {"status": "error", "message": "refresh_token tidak valid: gagal memperoleh access_token"}
@@ -341,17 +358,18 @@ async def download_all_creds_common() -> Response:
         for email in emails:
             try:
                 state = await database.get_credential_state(email)
+                cred = await database.get_credential(email)
+                if not cred:
+                    continue
+
                 export_data = {
-                    "refresh_token": "",
+                    "refresh_token": cred.get("refresh_token", ""),
+                    "access_token": cred.get("access_token", ""),
+                    "expiry": cred.get("expiry", ""),
                     "email": email,
                     "tier": state.get("tier", "pro"),
                     "project_id": state.get("project_id", ""),
                 }
-                cred = await database.get_credential(email)
-                if cred:
-                    export_data["refresh_token"] = cred.get("refresh_token", "")
-                else:
-                    continue
 
                 content = json.dumps(export_data, ensure_ascii=False, indent=2)
                 zip_file.writestr(f"{email}.json", content)
@@ -583,6 +601,8 @@ async def export_credential(
         state = await database.get_credential_state(email)
         export_data = {
             "refresh_token": cred.get("refresh_token", ""),
+            "access_token": cred.get("access_token", ""),
+            "expiry": cred.get("expiry", ""),
             "email": email,
             "tier": state.get("tier", "pro"),
             "project_id": cred.get("project_id", ""),
