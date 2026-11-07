@@ -13,38 +13,15 @@ security = HTTPBearer()
 
 # ====================== OAuth Configuration ======================
 
-_DEFAULT_ANTIGRAVITY_CLI_VERSION = "1.4.12"
-_LATEST_RELEASE_URL = (
-    "https://api.github.com/repos/google-antigravity/antigravity-cli/releases/latest"
-)
+_DEFAULT_ANTIGRAVITY_CLI_VERSION = "1.5.2"
 
 
 def _get_latest_antigravity_cli_version() -> str:
-    """Retrieve latest Antigravity CLI version string, falling back to default."""
-    try:
-        response = httpx.get(
-            _LATEST_RELEASE_URL,
-            headers={"Accept": "application/vnd.github+json"},
-            timeout=10.0,
-        )
-        response.raise_for_status()
-        release_data = response.json()
-    except (httpx.HTTPError, ValueError) as error:
-        log.warning(
-            "Failed to fetch latest Antigravity CLI version, using default "
-            f"{_DEFAULT_ANTIGRAVITY_CLI_VERSION}: {error}"
-        )
-        return _DEFAULT_ANTIGRAVITY_CLI_VERSION
-
-    tag_name = release_data.get("tag_name") if isinstance(release_data, dict) else None
-    if not isinstance(tag_name, str) or not tag_name.strip():
-        log.warning(
-            "No valid tag_name found in release response, using default "
-            f"{_DEFAULT_ANTIGRAVITY_CLI_VERSION}"
-        )
-        return _DEFAULT_ANTIGRAVITY_CLI_VERSION
-
-    return tag_name.strip().lstrip("vV")
+    """Retrieve Antigravity CLI version string (pinned to 1.5.2, configurable via ANTIGRAVITY_CLI_VERSION)."""
+    env_version = os.getenv("ANTIGRAVITY_CLI_VERSION", "").strip()
+    if env_version:
+        return env_version.lstrip("vV")
+    return _DEFAULT_ANTIGRAVITY_CLI_VERSION
 
 
 ANTIGRAVITY_CLI_VERSION = _get_latest_antigravity_cli_version()
