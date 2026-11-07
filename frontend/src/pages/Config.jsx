@@ -21,7 +21,7 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../components/Modal";
 import Select from "../components/Select";
 import api from "../api";
@@ -64,6 +64,45 @@ function CsvNumbersField({ value, onChange, placeholder }) {
       onBlur={handleBlur}
       placeholder={placeholder}
       className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-sm text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500 transition-colors"
+    />
+  );
+}
+
+function LinesField({ value, onChange, placeholder }) {
+  const toText = (v) => (Array.isArray(v) ? v.join("\n") : v ?? "");
+  const [text, setText] = useState(() => toText(value));
+  const focusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!focusedRef.current) setText(toText(value));
+  }, [value]);
+
+  const commitText = (raw) => {
+    const lines = raw
+      .split(/\r?\n/)
+      .map((w) => w.replace(/\s+$/, ""))
+      .filter((w) => w.trim() !== "");
+    onChange(lines);
+  };
+
+  return (
+    <textarea
+      value={text}
+      onFocus={() => {
+        focusedRef.current = true;
+      }}
+      onChange={(e) => {
+        const raw = e.target.value;
+        setText(raw);
+        commitText(raw);
+      }}
+      onBlur={() => {
+        focusedRef.current = false;
+        commitText(text);
+      }}
+      placeholder={placeholder}
+      rows={5}
+      className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
     />
   );
 }
@@ -612,18 +651,10 @@ export default function Config() {
 
     if (field.type === "textarea") {
       return (
-        <textarea
-          value={Array.isArray(value) ? value.join("\n") : value || ""}
-          onChange={(e) => {
-            const lines = e.target.value === "" ? [] : e.target.value.split("\n");
-            setField(
-              field.key,
-              lines.map((w) => w.replace(/\s+$/, "")).filter((w) => w.trim() !== "")
-            );
-          }}
+        <LinesField
+          value={value}
+          onChange={(v) => setField(field.key, v)}
           placeholder={field.placeholder}
-          rows={5}
-          className="w-full px-3.5 py-2.5 bg-dark-900 border border-dark-600 rounded-xl text-xs text-white placeholder-gray-500 font-mono focus:outline-none focus:border-purple-500"
         />
       );
     }
