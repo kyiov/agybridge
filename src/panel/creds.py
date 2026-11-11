@@ -820,3 +820,71 @@ async def test_credential(
     except Exception as e:
         log.error(f"Gagal menguji kredensial {email}: {e}")
         raise HTTPException(status_code=500, detail=f"Uji coba gagal: {str(e)}")
+
+
+# =============================================================================
+# Health Check & Fallback Routes
+# =============================================================================
+
+@router.post("/health-check")
+async def trigger_all_health_checks(token: str = Depends(verify_panel_token)):
+    """Run proactive session liveness check across all credentials."""
+    try:
+        from src.account_health import check_all_credentials_health
+        summary = await check_all_credentials_health()
+        return JSONResponse(content={
+            "success": True,
+            "message": f"Health check selesai: {summary['healthy']} sehat, {summary['hung']} hang, {summary['unhealthy']} tidak sehat",
+            "data": summary,
+        })
+    except Exception as e:
+        log.error(f"Gagal menjalankan health check massal: {e}")
+        raise HTTPException(status_code=500, detail=f"Health check gagal: {str(e)}")
+
+
+@router.post("/health-check/{email}")
+async def trigger_single_health_check(
+    email: str,
+    token: str = Depends(verify_panel_token)
+):
+    """Run session liveness check on a specific credential."""
+    try:
+        from src.account_health import check_credential_health
+        result = await check_credential_health(email)
+        return JSONResponse(content={
+            "success": result.get("healthy", False),
+            "data": result,
+            "message": f"Health check {email}: status={result.get('status')}",
+        })
+    except Exception as e:
+        log.error(f"Gagal menjalankan health check {email}: {e}")
+        raise HTTPException(status_code=500, detail=f"Health check {email} gagal: {str(e)}")
+
+
+@router.get("/fallback-status")
+async def get_fallback_status(token: str = Depends(verify_panel_token)):
+    """Retrieve fallback configuration and readiness status."""
+    try:
+        from config import (
+            get_fallback_api_keys,
+            get_fallback_base_url,
+            get_fallback_enabled,
+            get_fallback_model,
+        )
+        enabled = await get_fallback_enabled()
+        keys = await get_fallback_api_keys()
+        base_url = await get_fallback_base_url()
+        model_override = await get_fallback_model()
+
+        return JSONResponse(content={
+            "fallback_enabled": enabled,
+            "has_keys": len(keys) > 0,
+            "key_count": len(keys),
+            "base_url": base_url,
+            "model_override": model_override,
+            "active": enabled and len(keys) > 0,
+        })
+    except Exception as e:
+        log.error(f"Gagal mengambil status fallback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

@@ -328,6 +328,17 @@ async def stream_request(
     )
 
     if not cred_result:
+        from src.fallback import is_fallback_available, fallback_stream_request
+        if await is_fallback_available():
+            log.warning(
+                "[ANTIGRAVITY STREAM] No valid credentials available, falling back to key-based API (jalur ber-key)..."
+            )
+            async for chunk in fallback_stream_request(
+                body, native=native, headers=headers, log_ctx=log_ctx
+            ):
+                yield chunk
+            return
+
         log.error("[ANTIGRAVITY STREAM] No valid credentials available")
         log_entry.update({
             "status_code": 500, "success": False,
@@ -546,6 +557,15 @@ async def stream_request(
                     log_prefix="[ANTIGRAVITY STREAM]",
                 )
                 if not switched:
+                    from src.fallback import is_fallback_available, fallback_stream_request
+                    if await is_fallback_available():
+                        log.warning("[ANTIGRAVITY STREAM] No available credentials during retry, falling back to key-based API...")
+                        async for chunk in fallback_stream_request(
+                            body, native=native, headers=headers, log_ctx=log_ctx
+                        ):
+                            yield chunk
+                        return
+
                     log.error("[ANTIGRAVITY STREAM] No available credentials or tokens during retry")
                     yield Response(
                         content=json.dumps({"error": "No available credentials"}),
@@ -562,6 +582,11 @@ async def stream_request(
             raise
 
         except Exception as e:
+            is_timeout = isinstance(e, (asyncio.TimeoutError,)) or "timeout" in type(e).__name__.lower() or "timeout" in str(e).lower()
+            if is_timeout and current_file:
+                from src.account_health import mark_credential_hung
+                await mark_credential_hung(current_file, f"Stream timeout exception: {e}")
+
             log.error(f"[ANTIGRAVITY STREAM] Stream request exception: {e}, credential: {current_file}")
             if attempt < max_retries:
                 log.info(f"[ANTIGRAVITY STREAM] Retrying after exception (attempt {attempt + 2}/{max_retries + 1})...")
@@ -571,6 +596,16 @@ async def stream_request(
             else:
                 log.error(f"[ANTIGRAVITY STREAM] All retries failed, final exception: {e}")
                 await _log_stream_result(500, False, f"Exception: {e}")
+
+                from src.fallback import is_fallback_available, fallback_stream_request
+                if await is_fallback_available():
+                    log.warning("[ANTIGRAVITY STREAM] Final exception occurred, falling back to key-based API...")
+                    async for chunk in fallback_stream_request(
+                        body, native=native, headers=headers, log_ctx=log_ctx
+                    ):
+                        yield chunk
+                    return
+
                 if last_error_response:
                     yield last_error_response
                 else:
@@ -582,6 +617,15 @@ async def stream_request(
                 return
 
     log.error("[ANTIGRAVITY STREAM] All retries exhausted")
+    from src.fallback import is_fallback_available, fallback_stream_request
+    if await is_fallback_available():
+        log.warning("[ANTIGRAVITY STREAM] All retries exhausted, falling back to key-based API (jalur ber-key)...")
+        async for chunk in fallback_stream_request(
+            body, native=native, headers=headers, log_ctx=log_ctx
+        ):
+            yield chunk
+        return
+
     if last_error_response:
         yield last_error_response
     else:
@@ -654,6 +698,15 @@ async def non_stream_request(
     )
 
     if not cred_result:
+        from src.fallback import is_fallback_available, fallback_non_stream_request
+        if await is_fallback_available():
+            log.warning(
+                "[ANTIGRAVITY] No valid credentials available, falling back to key-based API (jalur ber-key)..."
+            )
+            return await fallback_non_stream_request(
+                body, headers=headers, log_ctx=log_ctx
+            )
+
         log.error("[ANTIGRAVITY] No valid credentials available")
         await _log_result(500, False, error_message="No valid credentials available")
         return Response(
@@ -818,6 +871,13 @@ async def non_stream_request(
                     log_prefix="[ANTIGRAVITY]",
                 )
                 if not switched:
+                    from src.fallback import is_fallback_available, fallback_non_stream_request
+                    if await is_fallback_available():
+                        log.warning("[ANTIGRAVITY] No available credentials during retry, falling back to key-based API...")
+                        return await fallback_non_stream_request(
+                            body, headers=headers, log_ctx=log_ctx
+                        )
+
                     log.error("[ANTIGRAVITY] No available credentials or tokens during retry")
                     return Response(
                         content=json.dumps({"error": "No available credentials"}),
@@ -827,6 +887,11 @@ async def non_stream_request(
                 continue
 
         except Exception as e:
+            is_timeout = isinstance(e, (asyncio.TimeoutError,)) or "timeout" in type(e).__name__.lower() or "timeout" in str(e).lower()
+            if is_timeout and current_file:
+                from src.account_health import mark_credential_hung
+                await mark_credential_hung(current_file, f"Non-stream timeout exception: {e}")
+
             log.error(f"[ANTIGRAVITY] Non-stream request exception: {e}, credential: {current_file}")
             if attempt < max_retries:
                 log.info(f"[ANTIGRAVITY] Retrying after exception (attempt {attempt + 2}/{max_retries + 1})...")
@@ -836,6 +901,14 @@ async def non_stream_request(
             else:
                 log.error(f"[ANTIGRAVITY] All retries failed, final exception: {e}")
                 await _log_result(500, False, error_message=f"Exception: {e}")
+
+                from src.fallback import is_fallback_available, fallback_non_stream_request
+                if await is_fallback_available():
+                    log.warning("[ANTIGRAVITY] Final exception occurred, falling back to key-based API...")
+                    return await fallback_non_stream_request(
+                        body, headers=headers, log_ctx=log_ctx
+                    )
+
                 if last_error_response:
                     return last_error_response
                 else:
@@ -846,6 +919,13 @@ async def non_stream_request(
                     )
 
     log.error("[ANTIGRAVITY] All retries exhausted")
+    from src.fallback import is_fallback_available, fallback_non_stream_request
+    if await is_fallback_available():
+        log.warning("[ANTIGRAVITY] All retries exhausted, falling back to key-based API (jalur ber-key)...")
+        return await fallback_non_stream_request(
+            body, headers=headers, log_ctx=log_ctx
+        )
+
     if last_error_response:
         return last_error_response
     else:

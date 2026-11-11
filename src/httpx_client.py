@@ -11,13 +11,29 @@ from typing import Any, AsyncGenerator, Dict, Optional
 import httpx
 from fastapi import Response
 
-from config import get_proxy_config
+from config import get_proxy_config, get_stream_read_timeout, get_request_timeout
 from log import log
 
 
-async def get_client_kwargs(timeout: float = 30.0, **kwargs) -> Dict[str, Any]:
-    """Retrieve common httpx client configuration kwargs."""
-    client_kwargs = {"timeout": timeout, **kwargs}
+async def get_client_kwargs(timeout: Optional[Any] = 30.0, **kwargs) -> Dict[str, Any]:
+    """Retrieve common httpx client configuration kwargs with robust connect/read timeouts."""
+    if timeout is None:
+        read_timeout = await get_stream_read_timeout()
+        timeout_config = httpx.Timeout(
+            connect=15.0,
+            read=read_timeout,
+            write=30.0,
+            pool=15.0,
+        )
+    elif isinstance(timeout, (int, float)):
+        timeout_config = httpx.Timeout(
+            timeout=float(timeout),
+            connect=15.0,
+        )
+    else:
+        timeout_config = timeout
+
+    client_kwargs = {"timeout": timeout_config, **kwargs}
 
     # Dynamically inject proxy if configured
     current_proxy_config = await get_proxy_config()
@@ -68,10 +84,12 @@ async def post_async(
     data: Any = None,
     json: Any = None,
     headers: Optional[Dict[str, str]] = None,
-    timeout: float = 900.0,
+    timeout: Optional[float] = None,
     **kwargs,
 ) -> httpx.Response:
-    """Execute asynchronous POST request."""
+    """Execute asynchronous POST request with hang prevention."""
+    if timeout is None:
+        timeout = await get_request_timeout()
     async with get_client(timeout=timeout, **kwargs) as client:
         return await client.post(url, data=data, json=json, headers=headers)
 

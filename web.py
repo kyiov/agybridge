@@ -57,9 +57,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         log.warning(f"Session cache initialization fallback to memory: {e}")
 
+    # Start per-account background health checker
+    try:
+        from src.account_health import start_health_check_loop, stop_health_check_loop
+        start_health_check_loop()
+    except Exception as e:
+        log.error(f"Failed to start health check loop: {e}")
+
     yield
 
     log.info("Shutting down AGYBridge service")
+
+    try:
+        from src.account_health import stop_health_check_loop
+        stop_health_check_loop()
+    except Exception as e:
+        log.debug(f"Error stopping health check loop: {e}")
 
     try:
         from src.storage.database import close_database

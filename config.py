@@ -46,6 +46,15 @@ ENV_MAPPINGS = {
     "PORT": "port",
     "API_PASSWORD": "api_password",
     "PANEL_PASSWORD": "panel_password",
+    "FALLBACK_ENABLED": "fallback_enabled",
+    "FALLBACK_API_KEY": "fallback_api_key",
+    "FALLBACK_BASE_URL": "fallback_base_url",
+    "FALLBACK_MODEL": "fallback_model",
+    "HEALTH_CHECK_ENABLED": "health_check_enabled",
+    "HEALTH_CHECK_INTERVAL": "health_check_interval",
+    "HEALTH_CHECK_TIMEOUT": "health_check_timeout",
+    "STREAM_READ_TIMEOUT": "stream_read_timeout",
+    "REQUEST_TIMEOUT": "request_timeout",
 }
 
 
@@ -548,3 +557,105 @@ async def get_antigravity_api_url() -> str:
             "ANTIGRAVITY_API_URL",
         )
     )
+
+
+# ====================== Health Check & Fallback Configuration ======================
+
+async def get_health_check_enabled() -> bool:
+    env_value = os.getenv("HEALTH_CHECK_ENABLED")
+    if env_value:
+        return env_value.lower() in ("true", "1", "yes", "on")
+    return bool(await get_config_value("health_check_enabled", True))
+
+
+async def get_health_check_interval() -> int:
+    env_value = os.getenv("HEALTH_CHECK_INTERVAL")
+    if env_value:
+        try:
+            return max(10, int(env_value))
+        except ValueError:
+            pass
+    return int(await get_config_value("health_check_interval", 180))
+
+
+async def get_health_check_timeout() -> float:
+    env_value = os.getenv("HEALTH_CHECK_TIMEOUT")
+    if env_value:
+        try:
+            return max(1.0, float(env_value))
+        except ValueError:
+            pass
+    return float(await get_config_value("health_check_timeout", 10.0))
+
+
+async def get_stream_read_timeout() -> float:
+    env_value = os.getenv("STREAM_READ_TIMEOUT")
+    if env_value:
+        try:
+            return max(5.0, float(env_value))
+        except ValueError:
+            pass
+    return float(await get_config_value("stream_read_timeout", 60.0))
+
+
+async def get_request_timeout() -> float:
+    env_value = os.getenv("REQUEST_TIMEOUT")
+    if env_value:
+        try:
+            return max(5.0, float(env_value))
+        except ValueError:
+            pass
+    return float(await get_config_value("request_timeout", 60.0))
+
+
+async def get_fallback_enabled() -> bool:
+    env_value = os.getenv("FALLBACK_ENABLED")
+    if env_value:
+        return env_value.lower() in ("true", "1", "yes", "on")
+
+    stored = await get_config_value("fallback_enabled")
+    if stored is not None:
+        return bool(stored)
+
+    # Auto-enable fallback if any fallback API key is configured
+    keys = await get_fallback_api_keys()
+    return len(keys) > 0
+
+
+async def get_fallback_api_keys() -> list[str]:
+    """Retrieve fallback API keys (from FALLBACK_API_KEY, FALLBACK_API_KEYS, or GEMINI_API_KEY)."""
+    raw_keys: list[str] = []
+
+    for env_var in ("FALLBACK_API_KEY", "FALLBACK_API_KEYS", "GEMINI_API_KEY"):
+        val = os.getenv(env_var)
+        if val and val.strip():
+            raw_keys.append(val.strip())
+
+    if not raw_keys:
+        stored = await get_config_value("fallback_api_key")
+        if stored and str(stored).strip():
+            raw_keys.append(str(stored).strip())
+
+    result: list[str] = []
+    for k in raw_keys:
+        for part in k.split(","):
+            cleaned = part.strip()
+            if cleaned and cleaned not in result:
+                result.append(cleaned)
+    return result
+
+
+async def get_fallback_base_url() -> str:
+    env_value = os.getenv("FALLBACK_BASE_URL")
+    if env_value and env_value.strip():
+        return env_value.strip().rstrip("/")
+    stored = await get_config_value("fallback_base_url", "https://generativelanguage.googleapis.com/v1beta")
+    return str(stored).strip().rstrip("/")
+
+
+async def get_fallback_model() -> str:
+    env_value = os.getenv("FALLBACK_MODEL")
+    if env_value and env_value.strip():
+        return env_value.strip()
+    return str(await get_config_value("fallback_model", "")).strip()
+

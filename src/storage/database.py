@@ -18,6 +18,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    case,
     func,
     inspect,
     select,
@@ -57,6 +58,10 @@ class AntigravityCredential(Base):
 
     model_cooldowns: Mapped[str] = mapped_column(Text, default="{}")
     tier: Mapped[Optional[str]] = mapped_column(String(32), default="pro")
+
+    health_status: Mapped[str] = mapped_column(String(32), default="healthy")
+    last_health_check: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    health_check_error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[float] = mapped_column(Float, default=time.time)
     updated_at: Mapped[float] = mapped_column(Float, default=time.time, onupdate=time.time)
@@ -220,7 +225,7 @@ class Database:
                 log.info("Legacy credential schema detected, rebuilding with email primary key")
                 sync_conn.execute(text(f"DROP TABLE {table_name}"))
 
-        for orm_model in (UsageLog,):
+        for orm_model in (AntigravityCredential, UsageLog):
             table = orm_model.__table__
             if not inspector.has_table(table.name):
                 continue
@@ -347,15 +352,19 @@ class Database:
     async def get_next_available_credential(
         self, model_name: Optional[str] = None
     ) -> Optional[Tuple[str, Dict[str, Any]]]:
-        """Randomly select an active credential not in cooldown for the requested model."""
+        """Select an active credential not in cooldown, prioritizing healthy sessions."""
         current_time = time.time()
         cd_group = get_cooldown_group(model_name) if model_name else None
         async with self.session() as s:
+            health_order = case(
+                (AntigravityCredential.health_status.in_(["unhealthy", "hung", "expired"]), 1),
+                else_=0
+            )
             rows = (
                 await s.scalars(
                     select(AntigravityCredential)
                     .where(AntigravityCredential.disabled == False)  # noqa: E712
-                    .order_by(func.random())
+                    .order_by(health_order, func.random())
                 )
             ).all()
             for row in rows:
@@ -370,7 +379,7 @@ class Database:
     async def get_available_credential_by_email(
         self, email: str, model_name: Optional[str] = None
     ) -> Optional[Tuple[str, Dict[str, Any]]]:
-        """Retrieve specific credential by email if active and not in cooldown."""
+        """Retrieve specific credential by email if active, healthy, and not in cooldown."""
         if not email:
             return None
         current_time = time.time()
@@ -380,6 +389,8 @@ class Database:
                 select(AntigravityCredential).where(AntigravityCredential.email == email)
             )
             if not row or row.disabled:
+                return None
+            if getattr(row, "health_status", "healthy") in ("hung", "expired"):
                 return None
             if cd_group:
                 cooldowns = _load_json(row.model_cooldowns, {})
@@ -395,8 +406,8 @@ class Database:
     ) -> bool:
         """Update credential status metadata."""
         json_fields = {"error_codes", "error_messages", "model_cooldowns"}
-        float_fields = {"last_success"}
-        str_fields = {"user_email", "tier", "project_id"}
+        float_fields = {"last_success", "last_health_check"}
+        str_fields = {"user_email", "tier", "project_id", "health_status", "health_check_error"}
         bool_fields = {"disabled"}
         async with self.session() as s:
             values: Dict[str, Any] = {}
@@ -456,6 +467,9 @@ class Database:
                     "model_cooldowns": cooldowns,
                     "tier": row.tier or "pro",
                     "project_id": row.project_id or "",
+                    "health_status": getattr(row, "health_status", "healthy") or "healthy",
+                    "last_health_check": getattr(row, "last_health_check", None),
+                    "health_check_error": getattr(row, "health_check_error", None),
                 }
             return states
 
@@ -529,6 +543,9 @@ class Database:
                     "model_cooldowns": active_cooldowns,
                     "tier": row.tier or "pro",
                     "project_id": row.project_id or "",
+                    "health_status": getattr(row, "health_status", "healthy") or "healthy",
+                    "last_health_check": getattr(row, "last_health_check", None),
+                    "health_check_error": getattr(row, "health_check_error", None),
                 }
                 if tier_filter and tier_filter in ("free", "pro", "ultra"):
                     if summary["tier"] != tier_filter:
