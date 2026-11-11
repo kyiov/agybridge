@@ -1,4 +1,4 @@
-full_hash=67d1fa41e28b961c980e3ce1f48c1afed6c854f2
-short_hash=67d1fa4
-message=fix(presets): remove hardcoded fallback api key
-date=2026-11-07 11:15:24 +0000
+full_hash=f94ec7727d0566e21df18e57066fd4c2035b31d1
+short_hash=f94ec77
+message=feat: add per-account health check and key-based fallback
+date=2026-11-11 17:25:52 +0800
